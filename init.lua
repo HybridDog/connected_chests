@@ -72,6 +72,19 @@ minetest.override_item("default:chest", {
 	end
 })
 
+local function remove_next(pos, oldnode)
+	local p1 = oldnode.param2
+	for p,param in pairs(param_tab) do
+		if param == p1 then
+			p1 = p
+			break
+		end
+	end
+	local x, z = unpack(string.split(p1, " "))
+	pos.x = pos.x-x
+	pos.z = pos.z-z
+	minetest.remove_node(pos)
+end
 
 minetest.register_node("connected_chests:chest_left", {
 	tiles = {"connected_chests_top.png", "connected_chests_top.png", "default_obsidian_glass.png",
@@ -92,19 +105,7 @@ minetest.register_node("connected_chests:chest_left", {
 		local inv = meta:get_inventory()
 		return inv:is_empty("main")
 	end,
-	after_dig_node = function(pos, oldnode)
-		local p1 = oldnode.param2
-		for p,param in pairs(param_tab) do
-			if param == p1 then
-				p1 = p
-				break
-			end
-		end
-		local x, z = unpack(string.split(p1, " "))
-		pos.x = pos.x-x
-		pos.z = pos.z-z
-		minetest.remove_node(pos)
-	end,
+	after_dig_node = remove_next,
 	on_metadata_inventory_move = function(pos, _, _, _, _, _, player)
 		minetest.log("action", player:get_player_name()..
 				" moves stuff in big chest at "..minetest.pos_to_string(pos))
@@ -119,19 +120,7 @@ minetest.register_node("connected_chests:chest_left", {
 	end,
 })
 
-minetest.register_node("connected_chests:chest_right", {
-	tiles = {"connected_chests_top.png^[transformFX", "connected_chests_top.png^[transformFX", "default_chest_side.png",
-		"default_obsidian_glass.png", "connected_chests_side.png", "connected_chests_side.png^connected_chests_front.png^[transformFX"},
-	paramtype2 = "facedir",
-	drop = "",
-	is_ground_content = false,
-	pointable = false,
-	can_dig = function()
-		return false
-	end,
-})
 
---[[
 local function has_locked_chest_privilege(meta, player)
 	if player:get_player_name() ~= meta:get_string("owner") then
 		return false
@@ -139,33 +128,39 @@ local function has_locked_chest_privilege(meta, player)
 	return true
 end
 
-minetest.register_node("default:chest_locked", {
-	description = "Locked Chest",
-	tiles = {"default_chest_top.png", "default_chest_top.png", "default_chest_side.png",
-		"default_chest_side.png", "default_chest_side.png", "default_chest_lock.png"},
+minetest.register_node("connected_chests:chest_locked_left", {
+	tiles = {"connected_chests_top.png", "connected_chests_top.png", "default_obsidian_glass.png",
+		"default_chest_side.png", "connected_chests_side.png^[transformFX", "connected_chests_side.png^connected_chests_lock.png"},
 	paramtype2 = "facedir",
+	drop = "default:chest_locked 2",
 	groups = {choppy=2,oddly_breakable_by_hand=2},
-	legacy_facedir_simple = true,
 	is_ground_content = false,
 	sounds = default.node_sound_wood_defaults(),
+	selection_box = {
+		type = "fixed",
+		fixed = {
+			{-0.5, -0.5, -0.5, 1.5, 0.5, 0.5},
+		},
+	},
 	after_place_node = function(pos, placer)
 		local meta = minetest.get_meta(pos)
 		meta:set_string("owner", placer:get_player_name() or "")
 		meta:set_string("infotext", "Locked Chest (owned by "..
 				meta:get_string("owner")..")")
 	end,
-	on_construct = function(pos)
+	--[[on_construct = function(pos)
 		local meta = minetest.get_meta(pos)
 		meta:set_string("infotext", "Locked Chest")
 		meta:set_string("owner", "")
 		local inv = meta:get_inventory()
 		inv:set_size("main", 8*4)
-	end,
-	can_dig = function(pos,player)
+	end,]]
+	can_dig = function(pos, player)
 		local meta = minetest.get_meta(pos);
 		local inv = meta:get_inventory()
 		return inv:is_empty("main") and has_locked_chest_privilege(meta, player)
 	end,
+	after_dig_node = remove_next,
 	allow_metadata_inventory_move = function(pos, from_list, from_index, to_list, to_index, count, player)
 		local meta = minetest.get_meta(pos)
 		if not has_locked_chest_privilege(meta, player) then
@@ -199,17 +194,17 @@ minetest.register_node("default:chest_locked", {
 		end
 		return stack:get_count()
 	end,
-	on_metadata_inventory_move = function(pos, from_list, from_index, to_list, to_index, count, player)
+	on_metadata_inventory_move = function(pos, _, _, _, _, _, player)
 		minetest.log("action", player:get_player_name()..
-				" moves stuff in locked chest at "..minetest.pos_to_string(pos))
+				" moves stuff in big locked chest at "..minetest.pos_to_string(pos))
 	end,
-    on_metadata_inventory_put = function(pos, listname, index, stack, player)
+    on_metadata_inventory_put = function(pos, _, _, _, player)
 		minetest.log("action", player:get_player_name()..
-				" moves stuff to locked chest at "..minetest.pos_to_string(pos))
+				" moves stuff to big locked chest at "..minetest.pos_to_string(pos))
 	end,
-    on_metadata_inventory_take = function(pos, listname, index, stack, player)
+    on_metadata_inventory_take = function(pos, _, _, _, player)
 		minetest.log("action", player:get_player_name()..
-				" takes stuff from locked chest at "..minetest.pos_to_string(pos))
+				" takes stuff from big locked chest at "..minetest.pos_to_string(pos))
 	end,
 	on_rightclick = function(pos, node, clicker)
 		local meta = minetest.get_meta(pos)
@@ -221,7 +216,30 @@ minetest.register_node("default:chest_locked", {
 			)
 		end
 	end,
-})]]
+})
 
+minetest.register_node("connected_chests:chest_right", {
+	tiles = {"connected_chests_top.png^[transformFX", "connected_chests_top.png^[transformFX", "default_chest_side.png",
+		"default_obsidian_glass.png", "connected_chests_side.png", "connected_chests_side.png^connected_chests_front.png^[transformFX"},
+	paramtype2 = "facedir",
+	drop = "",
+	is_ground_content = false,
+	pointable = false,
+	can_dig = function()
+		return false
+	end,
+})
+
+minetest.register_node("connected_chests:chest_locked_right", {
+	tiles = {"connected_chests_top.png^[transformFX", "connected_chests_top.png^[transformFX", "default_chest_side.png",
+		"default_obsidian_glass.png", "connected_chests_side.png", "connected_chests_side.png^connected_chests_lock.png^[transformFX"},
+	paramtype2 = "facedir",
+	drop = "",
+	is_ground_content = false,
+	pointable = false,
+	can_dig = function()
+		return false
+	end,
+})
 
 print(string.format("[connected_chest] loaded after ca. %.2fs", os.clock() - load_time_start))
