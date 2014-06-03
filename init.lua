@@ -125,25 +125,22 @@ local function log_access(pos, player, text)
 		" moves stuff "..text.." at "..minetest.pos_to_string(pos))
 end
 
+local default_chest = minetest.registered_nodes["default:chest"]
 minetest.register_node("connected_chests:chest_left", {
 	tiles = {"connected_chests_top.png", "connected_chests_top.png", "default_obsidian_glass.png",
 		"default_chest_side.png", "connected_chests_side.png^[transformFX", "connected_chests_side.png^connected_chests_front.png"},
 	paramtype2 = "facedir",
 	drop = "default:chest 2",
-	groups = {choppy=2,oddly_breakable_by_hand=2},
-	is_ground_content = false,
-	sounds = default.node_sound_wood_defaults(),
+	groups = default_chest.groups,
+	is_ground_content = default_chest.is_ground_content,
+	sounds = default_chest.sounds,
 	selection_box = {
 		type = "fixed",
 		fixed = {
 			{-0.5, -0.5, -0.5, 1.5, 0.5, 0.5},
 		},
 	},
-	can_dig = function(pos)
-		local meta = minetest.get_meta(pos);
-		local inv = meta:get_inventory()
-		return inv:is_empty("main")
-	end,
+	can_dig = default_chest.can_dig,
 	after_dig_node = remove_next,
 	on_metadata_inventory_move = function(pos, _, _, _, _, _, player)
 		log_access(pos, player, "in a big chest")
@@ -164,60 +161,26 @@ local function has_locked_chest_privilege(meta, player)
 	return true
 end
 
-local function access_allowed(pos, player, count)
-	local meta = minetest.get_meta(pos)
-	if not has_locked_chest_privilege(meta, player) then
-		minetest.log("action", player:get_player_name()..
-				" tried to access a big locked chest belonging to "..
-				meta:get_string("owner").." at "..
-				minetest.pos_to_string(pos))
-		return 0
-	end
-	return count
-end
-
+local default_chest_locked = minetest.registered_nodes["default:chest_locked"]
 minetest.register_node("connected_chests:chest_locked_left", {
 	tiles = {"connected_chests_top.png", "connected_chests_top.png", "default_obsidian_glass.png",
 		"default_chest_side.png", "connected_chests_side.png^[transformFX", "connected_chests_side.png^connected_chests_lock.png"},
 	paramtype2 = "facedir",
 	drop = "default:chest_locked 2",
-	groups = {choppy=2,oddly_breakable_by_hand=2},
-	is_ground_content = false,
-	sounds = default.node_sound_wood_defaults(),
+	groups = default_chest_locked.groups,
+	is_ground_content = default_chest_locked.is_ground_content,
+	sounds = default_chest_locked.sounds,
 	selection_box = {
 		type = "fixed",
 		fixed = {
 			{-0.5, -0.5, -0.5, 1.5, 0.5, 0.5},
 		},
 	},
-	--[[after_place_node = function(pos, placer)
-		local meta = minetest.get_meta(pos)
-		meta:set_string("owner", placer:get_player_name() or "")
-		meta:set_string("infotext", "Locked Chest (owned by "..
-				meta:get_string("owner")..")")
-	end,
-	on_construct = function(pos)
-		local meta = minetest.get_meta(pos)
-		meta:set_string("infotext", "Locked Chest")
-		meta:set_string("owner", "")
-		local inv = meta:get_inventory()
-		inv:set_size("main", 8*4)
-	end,]]
-	can_dig = function(pos, player)
-		local meta = minetest.get_meta(pos);
-		local inv = meta:get_inventory()
-		return inv:is_empty("main") and has_locked_chest_privilege(meta, player)
-	end,
+	can_dig = default_chest_locked.can_dig,
 	after_dig_node = remove_next,
-	allow_metadata_inventory_move = function(pos, _, _, _, _, count, player)
-		return access_allowed(pos, player, count)
-	end,
-    allow_metadata_inventory_put = function(pos, _, _, stack, player)
-		return access_allowed(pos, player, stack:get_count())
-	end,
-    allow_metadata_inventory_take = function(pos, _, _, stack, player)
-		return access_allowed(pos, player, stack:get_count())
-	end,
+	allow_metadata_inventory_move = default_chest_locked.allow_metadata_inventory_move,
+    allow_metadata_inventory_put = default_chest_locked.allow_metadata_inventory_put,
+    allow_metadata_inventory_take = default_chest_locked.allow_metadata_inventory_take,
 	on_metadata_inventory_move = function(pos, _, _, _, _, _, player)
 		log_access(pos, player, "in a big locked chest")
 	end,
@@ -246,7 +209,6 @@ minetest.register_node("connected_chests:chest_right", {
 		"default_obsidian_glass.png", "connected_chests_side.png", "connected_chests_side.png^connected_chests_front.png^[transformFX"},
 	paramtype2 = "facedir",
 	drop = "",
-	is_ground_content = false,
 	pointable = false,
 	can_dig = function()
 		return false
@@ -258,7 +220,6 @@ minetest.register_node("connected_chests:chest_locked_right", {
 		"default_obsidian_glass.png", "connected_chests_side.png", "connected_chests_side.png^connected_chests_lock.png^[transformFX"},
 	paramtype2 = "facedir",
 	drop = "",
-	is_ground_content = false,
 	pointable = false,
 	can_dig = function()
 		return false
