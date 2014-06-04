@@ -65,6 +65,11 @@ local param_tab = {
 	 ["0 1"] = 1,
 }
 
+local param_tab2 = {}
+for n,i in pairs(param_tab) do
+	param_tab2[i] = n
+end
+
 local pars = {[0]=2, 3, 0, 1}
 
 local function connect_chests(pu, pa, old_param2, name)
@@ -225,5 +230,32 @@ minetest.register_node("connected_chests:chest_locked_right", {
 		return false
 	end,
 })
+
+for _,i in pairs({"chest", "chest_locked"}) do
+	minetest.register_abm ({
+		nodenames = {"connected_chests:"..i.."_right"},
+		interval = 3,
+		chance = 1,
+		action = function (pos, node)
+			local x, z = unpack(string.split(param_tab2[node.param2], " "))
+			if minetest.get_node({x=pos.x+x, y=pos.y, z=pos.z+z}).name ~= "connected_chests:"..i.."_left" then
+				minetest.remove_node(pos)
+			end
+		end,
+	})
+	minetest.register_abm ({
+		nodenames = {"connected_chests:"..i.."_left"},
+		interval = 3,
+		chance = 1,
+		action = function (pos, node)
+			local par = node.param2
+			local x, z = unpack(string.split(param_tab2[par], " "))
+			pos = {x=pos.x-x, y=pos.y, z=pos.z-z}
+			if minetest.get_node(pos).name == "air" then
+				minetest.set_node(pos, {name="connected_chests:"..i.."_right", param2=par})
+			end
+		end,
+	})
+end
 
 print(string.format("[connected_chest] loaded after ca. %.2fs", os.clock() - load_time_start))
