@@ -1,2 +1,2 @@
 TODO:
-— maybe use [combine for front and lock
+— disallow rotating the chest with a screwdriver
