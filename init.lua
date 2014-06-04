@@ -111,18 +111,16 @@ for name,_ in pairs(chests) do
 	})
 end
 
-local function remove_next(pos, oldnode)
-	local p1 = oldnode.param2
-	for p,param in pairs(param_tab) do
-		if param == p1 then
-			p1 = p
-			break
+local function return_remove_next(allowed_name)
+	local function remove_next(pos, oldnode)
+		local x, z = unpack(string.split(param_tab2[oldnode.param2], " "))
+		pos.x = pos.x-x
+		pos.z = pos.z-z
+		if minetest.get_node(pos).name == allowed_name then
+			minetest.remove_node(pos)
 		end
 	end
-	local x, z = unpack(string.split(p1, " "))
-	pos.x = pos.x-x
-	pos.z = pos.z-z
-	minetest.remove_node(pos)
+	return remove_next
 end
 
 local function log_access(pos, player, text)
@@ -146,7 +144,7 @@ minetest.register_node("connected_chests:chest_left", {
 		},
 	},
 	can_dig = default_chest.can_dig,
-	after_dig_node = remove_next,
+	after_dig_node = return_remove_next("connected_chests:chest_right"),
 	on_metadata_inventory_move = function(pos, _, _, _, _, _, player)
 		log_access(pos, player, "in a big chest")
 	end,
@@ -182,7 +180,7 @@ minetest.register_node("connected_chests:chest_locked_left", {
 		},
 	},
 	can_dig = default_chest_locked.can_dig,
-	after_dig_node = remove_next,
+	after_dig_node = return_remove_next("connected_chests:chest_locked_right"),
 	allow_metadata_inventory_move = default_chest_locked.allow_metadata_inventory_move,
     allow_metadata_inventory_put = default_chest_locked.allow_metadata_inventory_put,
     allow_metadata_inventory_take = default_chest_locked.allow_metadata_inventory_take,
