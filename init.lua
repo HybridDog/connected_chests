@@ -256,4 +256,10 @@ for _,i in pairs({"chest", "chest_locked"}) do
 	})
 end
 
-print(string.format("[connected_chest] loaded after ca. %.2fs", os.clock() - load_time_start))
+local time = math.floor(tonumber(os.clock()-load_time_start)*100+0.5)/100
+local msg = "[] loaded after ca. "..time
+if time > 0.05 then
+	print(msg)
+else
+	minetest.log("info", msg)
+end
