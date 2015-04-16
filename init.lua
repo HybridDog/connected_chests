@@ -148,10 +148,10 @@ minetest.register_node("connected_chests:chest_left", {
 	on_metadata_inventory_move = function(pos, _, _, _, _, _, player)
 		log_access(pos, player, "in a big chest")
 	end,
-    on_metadata_inventory_put = function(pos, _, _, _, player)
+	on_metadata_inventory_put = function(pos, _, _, _, player)
 		log_access(pos, player, "to a big chest")
 	end,
-    on_metadata_inventory_take = function(pos, _, _, _, player)
+	on_metadata_inventory_take = function(pos, _, _, _, player)
 		log_access(pos, player, "from a big chest")
 	end,
 })
@@ -182,15 +182,15 @@ minetest.register_node("connected_chests:chest_locked_left", {
 	can_dig = default_chest_locked.can_dig,
 	after_dig_node = return_remove_next("connected_chests:chest_locked_right"),
 	allow_metadata_inventory_move = default_chest_locked.allow_metadata_inventory_move,
-    allow_metadata_inventory_put = default_chest_locked.allow_metadata_inventory_put,
-    allow_metadata_inventory_take = default_chest_locked.allow_metadata_inventory_take,
+	allow_metadata_inventory_put = default_chest_locked.allow_metadata_inventory_put,
+	allow_metadata_inventory_take = default_chest_locked.allow_metadata_inventory_take,
 	on_metadata_inventory_move = function(pos, _, _, _, _, _, player)
 		log_access(pos, player, "in a big locked chest")
 	end,
-    on_metadata_inventory_put = function(pos, _, _, _, player)
+	on_metadata_inventory_put = function(pos, _, _, _, player)
 		log_access(pos, player, "to a big locked chest")
 	end,
-    on_metadata_inventory_take = function(pos, _, _, _, player)
+	on_metadata_inventory_take = function(pos, _, _, _, player)
 		log_access(pos, player, "from a big locked chest")
 	end,
 	on_rightclick = function(pos, _, clicker)
@@ -213,9 +213,7 @@ minetest.register_node("connected_chests:chest_right", {
 	paramtype2 = "facedir",
 	drop = "",
 	pointable = false,
-	can_dig = function()
-		return false
-	end,
+	diggable = false,
 })
 
 minetest.register_node("connected_chests:chest_locked_right", {
@@ -224,9 +222,7 @@ minetest.register_node("connected_chests:chest_locked_right", {
 	paramtype2 = "facedir",
 	drop = "",
 	pointable = false,
-	can_dig = function()
-		return false
-	end,
+	diggable = false,
 })
 
 for _,i in pairs({"chest", "chest_locked"}) do
@@ -257,7 +253,7 @@ for _,i in pairs({"chest", "chest_locked"}) do
 end
 
 local time = math.floor(tonumber(os.clock()-load_time_start)*100+0.5)/100
-local msg = "[] loaded after ca. "..time
+local msg = "[connected_chests] loaded after ca. "..time
 if time > 0.05 then
 	print(msg)
 else
