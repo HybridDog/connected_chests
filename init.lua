@@ -113,6 +113,9 @@ end
 
 local function return_remove_next(allowed_name)
 	local function remove_next(pos, oldnode)
+		if oldnode.param2 > 3 then
+			return
+		end
 		local x, z = unpack(string.split(param_tab2[oldnode.param2], " "))
 		pos.x = pos.x-x
 		pos.z = pos.z-z
