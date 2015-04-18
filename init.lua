@@ -126,11 +126,18 @@ local function return_remove_next(allowed_name)
 	return remove_next
 end
 
+
+
 local function log_access(pos, player, text)
 	minetest.log("action", player:get_player_name()..
 		" moves stuff "..text.." at "..minetest.pos_to_string(pos))
 end
 
+
+-- Adds the big chests
+
+local top_texture = "connected_chests_top.png^default_chest_top.png^([combine:16x16:5,0=default_chest_top.png^connected_chests_frame.png^[makealpha:255,126,126)^connected_chests_top.png"
+local side_texture = "connected_chests_side.png^default_chest_side.png^([combine:16x16:5,0=default_chest_side.png^connected_chests_frame.png^[makealpha:255,126,126)^connected_chests_side.png"
 
 local chest = table.copy(minetest.registered_nodes["default:chest"])
 chest.description = nil
@@ -138,8 +145,8 @@ chest.legacy_facedir_simple = nil
 chest.after_place_node = nil
 chest.on_construct = nil
 chest.on_receive_fields = nil
-chest.tiles = {"connected_chests_top.png", "connected_chests_top.png", "default_obsidian_glass.png",
-	"default_chest_side.png", "connected_chests_side.png^[transformFX", "connected_chests_side.png^connected_chests_front.png"}
+chest.tiles = {top_texture, top_texture, "default_obsidian_glass.png",
+	"default_chest_side.png", side_texture.."^[transformFX", side_texture.."^connected_chests_front.png"}
 chest.drop = "default:chest 2"
 chest.selection_box = {
 	type = "fixed",
@@ -161,15 +168,14 @@ end
 minetest.register_node("connected_chests:chest_left", chest)
 
 
-
 local chest_locked = table.copy(minetest.registered_nodes["default:chest_locked"])
 chest_locked.description = nil
 chest_locked.legacy_facedir_simple = nil
 chest_locked.after_place_node = nil
 chest_locked.on_construct = nil
 chest_locked.on_receive_fields = nil
-chest_locked.tiles = {"connected_chests_top.png", "connected_chests_top.png", "default_obsidian_glass.png",
-	"default_chest_side.png", "connected_chests_side.png^[transformFX", "connected_chests_side.png^connected_chests_lock.png"}
+chest_locked.tiles = {top_texture, top_texture, "default_obsidian_glass.png",
+	"default_chest_side.png", side_texture.."^[transformFX", side_texture.."^connected_chests_front.png^connected_chests_lock.png"}
 chest_locked.drop = "default:chest_locked 2"
 chest_locked.selection_box = {
 	type = "fixed",
@@ -204,8 +210,8 @@ minetest.register_node("connected_chests:chest_locked_left", chest_locked)
 
 
 minetest.register_node("connected_chests:chest_right", {
-	tiles = {"connected_chests_top.png^[transformFX", "connected_chests_top.png^[transformFX", "default_chest_side.png",
-		"default_obsidian_glass.png", "connected_chests_side.png", "connected_chests_side.png^connected_chests_front.png^[transformFX"},
+	tiles = {top_texture.."^[transformFX", top_texture.."^[transformFX", "default_chest_side.png",
+		"default_obsidian_glass.png", side_texture, side_texture.."^connected_chests_front.png^[transformFX"},
 	paramtype2 = "facedir",
 	drop = "",
 	pointable = false,
@@ -213,14 +219,15 @@ minetest.register_node("connected_chests:chest_right", {
 })
 
 minetest.register_node("connected_chests:chest_locked_right", {
-	tiles = {"connected_chests_top.png^[transformFX", "connected_chests_top.png^[transformFX", "default_chest_side.png",
-		"default_obsidian_glass.png", "connected_chests_side.png", "connected_chests_side.png^connected_chests_lock.png^[transformFX"},
+	tiles = {top_texture.."^[transformFX", top_texture.."^[transformFX", "default_chest_side.png",
+		"default_obsidian_glass.png", side_texture, side_texture.."^connected_chests_front.png^connected_chests_lock.png^[transformFX"},
 	paramtype2 = "facedir",
 	drop = "",
 	pointable = false,
 	diggable = false,
 })
 
+-- abms to fix half chests
 for _,i in pairs({"chest", "chest_locked"}) do
 	minetest.register_abm ({
 		nodenames = {"connected_chests:"..i.."_right"},
