@@ -131,17 +131,20 @@ end
 
 local chest = table.copy(minetest.registered_nodes["default:chest"])
 chest.description = nil
+chest.legacy_facedir_simple = nil
+chest.after_place_node = nil
+chest.on_construct = nil
+chest.on_receive_fields = nil
 chest.tiles = {"connected_chests_top.png", "connected_chests_top.png", "default_obsidian_glass.png",
 	"default_chest_side.png", "connected_chests_side.png^[transformFX", "connected_chests_side.png^connected_chests_front.png"}
 chest.drop = "default:chest 2"
-chest.legacy_facedir_simple = nil
 chest.selection_box = {
 	type = "fixed",
 	fixed = {
 		{-0.5, -0.5, -0.5, 1.5, 0.5, 0.5},
 	},
 }
-chest.after_dig_node = return_remove_next("connected_chests:chest_right")
+chest.after_destruct = return_remove_next("connected_chests:chest_right")
 chest.on_metadata_inventory_move = function(pos, _, _, _, _, _, player)
 	log_access(pos, player, "in a big chest")
 end
@@ -156,55 +159,46 @@ minetest.register_node("connected_chests:chest_left", chest)
 
 
 
-local function has_locked_chest_privilege(meta, player)
-	if player:get_player_name() ~= meta:get_string("owner") then
-		return false
+local chest_locked = table.copy(minetest.registered_nodes["default:chest_locked"])
+chest_locked.description = nil
+chest_locked.legacy_facedir_simple = nil
+chest_locked.after_place_node = nil
+chest_locked.on_construct = nil
+chest_locked.on_receive_fields = nil
+chest_locked.tiles = {"connected_chests_top.png", "connected_chests_top.png", "default_obsidian_glass.png",
+	"default_chest_side.png", "connected_chests_side.png^[transformFX", "connected_chests_side.png^connected_chests_lock.png"}
+chest_locked.drop = "default:chest_locked 2"
+chest_locked.selection_box = {
+	type = "fixed",
+	fixed = {
+		{-0.5, -0.5, -0.5, 1.5, 0.5, 0.5},
+	},
+}
+chest_locked.after_destruct = return_remove_next("connected_chests:chest_locked_right")
+chest_locked.on_metadata_inventory_move = function(pos, _, _, _, _, _, player)
+	log_access(pos, player, "in a big locked chest")
+end
+chest_locked.on_metadata_inventory_put = function(pos, _, _, _, player)
+	log_access(pos, player, "to a big locked chest")
+end
+chest_locked.on_metadata_inventory_take = function(pos, _, _, _, player)
+	log_access(pos, player, "from a big locked chest")
+end
+chest_locked.on_rightclick = function(pos, _, clicker)
+	local meta = minetest.get_meta(pos)
+	if clicker:get_player_name() == meta:get_string("owner") then
+		minetest.show_formspec(
+			clicker:get_player_name(),
+			"connected_chests:chest_locked_left",
+			"size[13,9]"..
+			"list[nodemeta:".. pos.x .. "," .. pos.y .. "," ..pos.z .. ";main;0,0;13,5;]"..
+			"list[current_player;main;2.5,5.2;8,4;]"
+		)
 	end
-	return true
 end
 
-local default_chest_locked = minetest.registered_nodes["default:chest_locked"]
-minetest.register_node("connected_chests:chest_locked_left", {
-	tiles = {"connected_chests_top.png", "connected_chests_top.png", "default_obsidian_glass.png",
-		"default_chest_side.png", "connected_chests_side.png^[transformFX", "connected_chests_side.png^connected_chests_lock.png"},
-	paramtype2 = "facedir",
-	drop = "default:chest_locked 2",
-	groups = default_chest_locked.groups,
-	is_ground_content = default_chest_locked.is_ground_content,
-	sounds = default_chest_locked.sounds,
-	selection_box = {
-		type = "fixed",
-		fixed = {
-			{-0.5, -0.5, -0.5, 1.5, 0.5, 0.5},
-		},
-	},
-	can_dig = default_chest_locked.can_dig,
-	after_dig_node = return_remove_next("connected_chests:chest_locked_right"),
-	allow_metadata_inventory_move = default_chest_locked.allow_metadata_inventory_move,
-	allow_metadata_inventory_put = default_chest_locked.allow_metadata_inventory_put,
-	allow_metadata_inventory_take = default_chest_locked.allow_metadata_inventory_take,
-	on_metadata_inventory_move = function(pos, _, _, _, _, _, player)
-		log_access(pos, player, "in a big locked chest")
-	end,
-	on_metadata_inventory_put = function(pos, _, _, _, player)
-		log_access(pos, player, "to a big locked chest")
-	end,
-	on_metadata_inventory_take = function(pos, _, _, _, player)
-		log_access(pos, player, "from a big locked chest")
-	end,
-	on_rightclick = function(pos, _, clicker)
-		local meta = minetest.get_meta(pos)
-		if has_locked_chest_privilege(meta, clicker) then
-			minetest.show_formspec(
-				clicker:get_player_name(),
-				"connected_chests:chest_locked_left",
-				"size[13,9]"..
-				"list[nodemeta:".. pos.x .. "," .. pos.y .. "," ..pos.z .. ";main;0,0;13,5;]"..
-				"list[current_player;main;2.5,5.2;8,4;]"
-			)
-		end
-	end,
-})
+minetest.register_node("connected_chests:chest_locked_left", chest_locked)
+
 
 minetest.register_node("connected_chests:chest_right", {
 	tiles = {"connected_chests_top.png^[transformFX", "connected_chests_top.png^[transformFX", "default_chest_side.png",
