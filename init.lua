@@ -43,10 +43,9 @@ local function get_pointed_info(pointed_thing, name)
 	end
 	local pu = minetest.get_pointed_thing_position(pointed_thing)
 	local pa = minetest.get_pointed_thing_position(pointed_thing, true)
-	if not (pu and pa) then
-		return
-	end
-	if pu.y ~= pa.y then
+	if not pu
+	or not pa
+	or pu.y ~= pa.y then
 		return
 	end
 	local nd_u = minetest.get_node(pu)
@@ -93,11 +92,11 @@ for name,_ in pairs(chests) do
 				return
 			end
 			local pu, pa, par2 = get_pointed_info(pointed_thing, name)
-			if not (pu and placer:get_player_control().sneak) then
+			if not pu
+			or not placer:get_player_control().sneak then
 				return place_chest(itemstack, placer, pointed_thing)
 			end
-			local protected = minetest.is_protected(pa, placer:get_player_name())
-			if protected then
+			if minetest.is_protected(pa, placer:get_player_name()) then
 				return
 			end
 			connect_chests(pu, pa, par2, name)
