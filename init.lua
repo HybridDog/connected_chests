@@ -2,17 +2,19 @@ local load_time_start = os.clock()
 
 local creative_enabled = minetest.setting_getbool("creative_mode")
 
+local big_formspec = "size[13,9]"..
+	"list[current_name;main;0,0;13,5;]"..
+	"list[current_player;main;2.5,5.2;8,4;]"..
+	"listring[current_name;main]"..
+	"listring[current_player;main]"
+
 local chests = {
 	["default:chest"] = function(pu, pa, par, stuff)
 		minetest.add_node(pu, {name="connected_chests:chest_left", param2=par})
 		minetest.add_node(pa, {name="connected_chests:chest_right", param2=par})
 
 		local meta = minetest.get_meta(pu)
-		meta:set_string("formspec",
-			"size[13,9]"..
-			"list[current_name;main;0,0;13,5;]"..
-			"list[current_player;main;2.5,5.2;8,4;]"
-		)
+		meta:set_string("formspec", big_formspec)
 		meta:set_string("infotext", "Big Chest")
 		local inv = meta:get_inventory()
 		inv:set_size("main", 65)
@@ -25,11 +27,7 @@ local chests = {
 
 		local meta = minetest.get_meta(pu)
 		meta:set_string("owner", owner)
-		meta:set_string("formspec",
-			"size[13,9]"..
-			"list[current_name;main;0,0;13,5;]"..
-			"list[current_player;main;2.5,5.2;8,4;]"
-		)
+		meta:set_string("formspec", big_formspec)
 		meta:set_string("infotext", "Big Locked Chest (owned by "..
 				meta:get_string("owner")..")")
 		local inv = meta:get_inventory()
