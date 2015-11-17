@@ -225,6 +225,21 @@ end
 minetest.register_node("connected_chests:chest_locked_left", chest_locked)
 
 
+local tube_to_left_locked = {
+	insert_object = function(pos, node, stack)
+		local x, z = unpack(string.split(param_tab2[node.param2], " "))
+		return minetest.get_meta({x=pos.x+x, y=pos.y, z=pos.z+z}):get_inventory():add_item("main", stack)
+	end,
+	can_insert = function(pos, node, stack)
+		local x, z = unpack(string.split(param_tab2[node.param2], " "))
+		return minetest.get_meta({x=pos.x+x, y=pos.y, z=pos.z+z}):get_inventory():room_for_item("main", stack)
+	end,
+	connect_sides = {right = 1, back = 1, front = 1, bottom = 1, top = 1}
+}
+
+local tube_to_left = table.copy(tube_to_left_locked)
+tube_to_left.input_inventory = "main"
+
 minetest.register_node("connected_chests:chest_right", {
 	tiles = {top_texture.."^[transformFX", top_texture.."^[transformFX", "default_chest_side.png",
 		"default_obsidian_glass.png", side_texture, side_texture.."^connected_chests_front.png^[transformFX"},
@@ -257,7 +272,8 @@ minetest.register_node("connected_chests:chest_right", {
 		and minetest.get_node(pos).name == "air" then
 			minetest.set_node(pos, oldnode)
 		end
-	end
+	end,
+	tube = tube_to_left,
 })
 
 minetest.register_node("connected_chests:chest_locked_right", {
@@ -292,7 +308,8 @@ minetest.register_node("connected_chests:chest_locked_right", {
 		and minetest.get_node(pos).name == "air" then
 			minetest.set_node(pos, oldnode)
 		end
-	end
+	end,
+	tube = tube_to_left_locked,
 })
 
 -- abms to fix half chests
