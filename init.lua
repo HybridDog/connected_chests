@@ -154,7 +154,12 @@ end
 local top_texture = "connected_chests_top.png^default_chest_top.png^([combine:16x16:5,0=default_chest_top.png^connected_chests_frame.png^[makealpha:255,126,126)^connected_chests_top.png"
 local side_texture = "connected_chests_side.png^default_chest_side.png^([combine:16x16:5,0=default_chest_side.png^connected_chests_frame.png^[makealpha:255,126,126)^connected_chests_side.png"
 
-local chest = table.copy(minetest.registered_nodes["default:chest"])
+local chest = {}
+local origdef = minetest.registered_nodes["default:chest"]
+for i in pairs(origdef) do
+	chest[i] = rawget(origdef, i)
+end
+
 chest.description = nil
 chest.legacy_facedir_simple = nil
 chest.after_place_node = nil
@@ -183,7 +188,12 @@ end
 minetest.register_node("connected_chests:chest_left", chest)
 
 
-local chest_locked = table.copy(minetest.registered_nodes["default:chest_locked"])
+local chest_locked = {}
+local origdef = minetest.registered_nodes["default:chest_locked"]
+for i in pairs(origdef) do
+	chest_locked[i] = rawget(origdef, i)
+end
+
 chest_locked.description = nil
 chest_locked.legacy_facedir_simple = nil
 chest_locked.after_place_node = nil
