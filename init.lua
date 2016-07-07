@@ -1,6 +1,7 @@
-local load_time_start = os.clock()
+local load_time_start = minetest.get_us_time()
 
-local creative_enabled = minetest.setting_getbool("creative_mode")
+
+local creative_enabled = minetest.setting_getbool"creative_mode"
 
 local big_formspec = "size[13,9]"..
 	"list[current_name;main;0,0;13,5;]"..
@@ -29,7 +30,7 @@ local chests = {
 		meta:set_string("owner", owner)
 		meta:set_string("formspec", big_formspec)
 		meta:set_string("infotext", "Big Locked Chest (owned by "..
-				meta:get_string("owner")..")")
+				meta:get_string"owner"..")")
 		local inv = meta:get_inventory()
 		inv:set_size("main", 65)
 		inv:set_list("main", stuff)
@@ -37,12 +38,12 @@ local chests = {
 }
 
 
-local function get_pointed_info(pointed_thing, name)
-	if not pointed_thing then
+local function get_pointed_info(pt, name)
+	if not pt then
 		return
 	end
-	local pu = minetest.get_pointed_thing_position(pointed_thing)
-	local pa = minetest.get_pointed_thing_position(pointed_thing, true)
+	local pu = minetest.get_pointed_thing_position(pt)
+	local pa = minetest.get_pointed_thing_position(pt, true)
 	if not pu
 	or not pa
 	or pu.y ~= pa.y then
@@ -64,15 +65,15 @@ local param_tab = {
 
 local param_tab2 = {}
 for n,i in pairs(param_tab) do
-	param_tab2[i] = n
+	param_tab2[i] = n:split" "
 end
 
 local pars = {[0]=2, 3, 0, 1}
 
 local function connect_chests(pu, pa, old_param2, name)
 	local oldmeta = minetest.get_meta(pu)
-	local stuff = oldmeta:get_inventory():get_list("main")
-	local owner = oldmeta:get_string("owner")
+	local stuff = oldmeta:get_inventory():get_list"main"
+	local owner = oldmeta:get_string"owner"
 
 	local par = param_tab[pu.x-pa.x.." "..pu.z-pa.z]
 	local par_inverted = pars[par]
@@ -84,7 +85,7 @@ local function connect_chests(pu, pa, old_param2, name)
 	chests[name](pu, pa, par, stuff, name, owner)
 end
 
-for name,_ in pairs(chests) do
+for name in pairs(chests) do
 	local place_chest = minetest.registered_nodes[name].on_place
 	minetest.override_item(name, {
 		on_place = function(itemstack, placer, pointed_thing)
@@ -113,7 +114,7 @@ local function return_remove_next(allowed_name)
 		if oldnode.param2 > 3 then
 			return
 		end
-		local x, z = unpack(string.split(param_tab2[oldnode.param2], " "))
+		local x, z = unpack(param_tab2[oldnode.param2])
 		pos.x = pos.x-x
 		pos.z = pos.z-z
 		if minetest.get_node(pos).name == allowed_name then
@@ -132,7 +133,7 @@ local function return_add_next(right_name)
 			minetest.set_node(pos, node)
 			return
 		end
-		local x, z = unpack(string.split(param_tab2[par], " "))
+		local x, z = unpack(param_tab2[par])
 		pos.x = pos.x-x
 		pos.z = pos.z-z
 		if minetest.get_node(pos).name == "air" then
@@ -173,8 +174,8 @@ chest.selection_box = {
 		{-0.5, -0.5, -0.5, 1.5, 0.5, 0.5},
 	},
 }
-chest.on_construct = return_add_next("connected_chests:chest_right")
-chest.after_destruct = return_remove_next("connected_chests:chest_right")
+chest.on_construct = return_add_next"connected_chests:chest_right"
+chest.after_destruct = return_remove_next"connected_chests:chest_right"
 chest.on_metadata_inventory_move = function(pos, _, _, _, _, _, player)
 	log_access(pos, player, "in a big chest")
 end
@@ -208,8 +209,8 @@ chest_locked.selection_box = {
 		{-0.5, -0.5, -0.5, 1.5, 0.5, 0.5},
 	},
 }
-chest_locked.on_construct = return_add_next("connected_chests:chest_locked_right")
-chest_locked.after_destruct = return_remove_next("connected_chests:chest_locked_right")
+chest_locked.on_construct = return_add_next"connected_chests:chest_locked_right"
+chest_locked.after_destruct = return_remove_next"connected_chests:chest_locked_right"
 chest_locked.on_metadata_inventory_move = function(pos, _, _, _, _, _, player)
 	log_access(pos, player, "in a big locked chest")
 end
@@ -222,8 +223,8 @@ end
 chest_locked.on_rightclick = function(pos, _, clicker)
 	local meta = minetest.get_meta(pos)
 	local pname = clicker:get_player_name()
-	if pname == meta:get_string("owner")
-	or pname == minetest.setting_get("name") then
+	if pname == meta:get_string"owner"
+	or pname == minetest.setting_get"name" then
 		minetest.show_formspec(
 			pname,
 			"connected_chests:chest_locked_left",
@@ -238,15 +239,15 @@ minetest.register_node("connected_chests:chest_locked_left", chest_locked)
 
 
 local tube_to_left, tube_to_left_locked, tube_update, tube_groups
-if minetest.global_exists("pipeworks") then
+if minetest.global_exists"pipeworks" then
 	tube_to_left_locked = {
 		insert_object = function(pos, node, stack)
-			local x, z = unpack(string.split(param_tab2[node.param2], " "))
-			return minetest.get_meta({x=pos.x+x, y=pos.y, z=pos.z+z}):get_inventory():add_item("main", stack)
+			local x, z = unpack(param_tab2[node.param2])
+			return minetest.get_meta{x=pos.x+x, y=pos.y, z=pos.z+z}:get_inventory():add_item("main", stack)
 		end,
 		can_insert = function(pos, node, stack)
-			local x, z = unpack(string.split(param_tab2[node.param2], " "))
-			return minetest.get_meta({x=pos.x+x, y=pos.y, z=pos.z+z}):get_inventory():room_for_item("main", stack)
+			local x, z = unpack(param_tab2[node.param2])
+			return minetest.get_meta{x=pos.x+x, y=pos.y, z=pos.z+z}:get_inventory():room_for_item("main", stack)
 		end,
 		connect_sides = {right = 1, back = 1, front = 1, bottom = 1, top = 1}
 	}
@@ -275,8 +276,8 @@ minetest.register_node("connected_chests:chest_right", {
 			minetest.set_node(pos, node)
 			return
 		end
-		local x, z = unpack(string.split(param_tab2[node.param2], " "))
-		local node_left = minetest.get_node({x=pos.x+x, y=pos.y, z=pos.z+z})
+		local x, z = unpack(param_tab2[node.param2])
+		local node_left = minetest.get_node{x=pos.x+x, y=pos.y, z=pos.z+z}
 		if node_left.name ~= "connected_chests:chest_left"
 		or node_left.param2 ~= node.param2 then
 			minetest.remove_node(pos)
@@ -288,8 +289,8 @@ minetest.register_node("connected_chests:chest_right", {
 		if oldnode.param2 > 3 then
 			return
 		end
-		local x, z = unpack(string.split(param_tab2[oldnode.param2], " "))
-		local node_left = minetest.get_node({x=pos.x+x, y=pos.y, z=pos.z+z})
+		local x, z = unpack(param_tab2[oldnode.param2])
+		local node_left = minetest.get_node{x=pos.x+x, y=pos.y, z=pos.z+z}
 		if node_left.name == "connected_chests:chest_left"
 		and node_left.param2 == oldnode.param2
 		and minetest.get_node(pos).name == "air" then
@@ -317,8 +318,8 @@ minetest.register_node("connected_chests:chest_locked_right", {
 			minetest.set_node(pos, node)
 			return
 		end
-		local x, z = unpack(string.split(param_tab2[node.param2], " "))
-		local node_left = minetest.get_node({x=pos.x+x, y=pos.y, z=pos.z+z})
+		local x, z = unpack(param_tab2[node.param2])
+		local node_left = minetest.get_node{x=pos.x+x, y=pos.y, z=pos.z+z}
 		if node_left.name ~= "connected_chests:chest_locked_left"
 		or node_left.param2 ~= node.param2 then
 			minetest.remove_node(pos)
@@ -330,8 +331,8 @@ minetest.register_node("connected_chests:chest_locked_right", {
 		if oldnode.param2 > 3 then
 			return
 		end
-		local x, z = unpack(string.split(param_tab2[oldnode.param2], " "))
-		local node_left = minetest.get_node({x=pos.x+x, y=pos.y, z=pos.z+z})
+		local x, z = unpack(param_tab2[oldnode.param2])
+		local node_left = minetest.get_node{x=pos.x+x, y=pos.y, z=pos.z+z}
 		if node_left.name == "connected_chests:chest_locked_left"
 		and node_left.param2 == oldnode.param2
 		and minetest.get_node(pos).name == "air" then
@@ -345,36 +346,37 @@ minetest.register_node("connected_chests:chest_locked_right", {
 })
 
 -- abms to fix half chests
-for _,i in pairs({"chest", "chest_locked"}) do
-	minetest.register_abm ({
+for _,i in pairs{"chest", "chest_locked"} do
+	minetest.register_abm{
 		nodenames = {"connected_chests:"..i.."_right"},
 		interval = 10,
 		chance = 1,
-		action = function (pos, node)
+		action = function(pos, node)
 			if node.param2 > 3 then
 				node.param2 = node.param2%4
 				minetest.set_node(pos, node)
 				return
 			end
-			local x, z = unpack(string.split(param_tab2[node.param2], " "))
-			local left_node = minetest.get_node({x=pos.x+x, y=pos.y, z=pos.z+z})
+			local x, z = unpack(param_tab2[node.param2])
+			local left_node = minetest.get_node{x=pos.x+x, y=pos.y, z=pos.z+z}
 			if left_node.name ~= "connected_chests:"..i.."_left"
 			or left_node.param2 ~= node.param2 then
 				minetest.remove_node(pos)
 			end
 		end,
-	})
-	minetest.register_abm ({
+	}
+	minetest.register_abm{
 		nodenames = {"connected_chests:"..i.."_left"},
 		interval = 3,
 		chance = 1,
 		action = return_add_next("connected_chests:"..i.."_right"),
-	})
+	}
 end
 
-local time = math.floor(tonumber(os.clock()-load_time_start)*100+0.5)/100
-local msg = "[connected_chests] loaded after ca. "..time
-if time > 0.05 then
+
+local time = (minetest.get_us_time() - load_time_start) / 1000000
+local msg = "[connected_chests] loaded after ca. " .. time .. " seconds."
+if time > 0.01 then
 	print(msg)
 else
 	minetest.log("info", msg)
