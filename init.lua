@@ -9,8 +9,57 @@ local big_formspec = "size[13,9]"..
 	"listring[current_name;main]"..
 	"listring[current_player;main]"
 
+local function formspec_biggerinv(spec)
+	return big_formspec
+end
+
+local chests = {}
+
+local chestdata = {}
+local function register_chest(fromname, data)
+	chestdata[fromname] = data
+
+	local mod, name = fromname:split":"
+
+	-- executed when connecting the chest
+	chests[fromname] = function(pu, pa, par, metatable)
+		minetest.add_node(pu, {name=fromname .. "_connected_left", param2=par})
+		minetest.add_node(pa, {name=fromname .. "_connected_right", param2=par})
+
+		metatable.fields.formspec = formspec_biggerinv(metatable.fields.formspec)
+		metatable.fields.infotext = "Big " .. metatable.fields.infotext
+		local inv = metatable.inventory
+		inv:set_size("main", 65)
+		local meta = minetest.get_meta(pu)
+		meta:from_table(metatable)
+	end
+
+	-- override the original node to support connecting
+	local place_chest = minetest.registered_nodes[fromname].on_place
+	minetest.override_item(fromname, {
+		on_place = function(itemstack, placer, pointed_thing)
+			if not placer then
+				return
+			end
+			local pu, pa, par2 = get_pointed_info(pointed_thing, fromname)
+			if not pu
+			or not placer:get_player_control().sneak then
+				return place_chest(itemstack, placer, pointed_thing)
+			end
+			if minetest.is_protected(pa, placer:get_player_name()) then
+				return
+			end
+			connect_chests(pu, pa, par2, fromname)
+			if not creative_enabled then
+				itemstack:take_item()
+				return itemstack
+			end
+		end
+	})
+end
+
 local chests = {
-	["default:chest"] = function(pu, pa, par, stuff)
+	["default:chest"] = function(pu, pa, par, metatable, stuff)
 		minetest.add_node(pu, {name="connected_chests:chest_left", param2=par})
 		minetest.add_node(pa, {name="connected_chests:chest_right", param2=par})
 
@@ -71,9 +120,8 @@ end
 local pars = {[0]=2, 3, 0, 1}
 
 local function connect_chests(pu, pa, old_param2, name)
-	local oldmeta = minetest.get_meta(pu)
-	local stuff = oldmeta:get_inventory():get_list"main"
-	local owner = oldmeta:get_string"owner"
+	local metatable = minetest.get_meta(pu):to_table()
+	print(dump(metatable))
 
 	local par = param_tab[pu.x-pa.x.." "..pu.z-pa.z]
 	local par_inverted = pars[par]
@@ -82,9 +130,10 @@ local function connect_chests(pu, pa, old_param2, name)
 		par = par_inverted
 	end
 
-	chests[name](pu, pa, par, stuff, name, owner)
+	chests[name](pu, pa, par, metatable)
 end
 
+--[[
 for name in pairs(chests) do
 	local place_chest = minetest.registered_nodes[name].on_place
 	minetest.override_item(name, {
@@ -107,7 +156,7 @@ for name in pairs(chests) do
 			end
 		end
 	})
-end
+end--]]
 
 local function return_remove_next(allowed_name)
 	local function remove_next(pos, oldnode)
