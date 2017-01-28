@@ -126,6 +126,7 @@ connected_chests.register_chest(<original_node>, {
 		-- and has an impact on the tube function
 	front = <keyhole_texture>, -- if present, this texture is added to the chest
 		-- front
+	on_rightclick = <func>, -- sets an on_rightclick (some chests need this)
 })
 ]]
 
@@ -197,6 +198,10 @@ function connected_chests.register_chest(fromname, data)
 	chest.legacy_facedir_simple = nil
 	chest.after_place_node = nil
 	chest.on_receive_fields = nil
+	if data.on_rightclick then
+		chest.on_rightclick = data.on_rightclick
+	end
+
 	if not data.front then
 		data.front = "connected_chests_front.png"
 		if data.lock then
@@ -283,7 +288,21 @@ connected_chests.register_chest("default:chest_locked", {
 	get_formspec = function()
 		return big_formspec
 	end,
-	lock = true
+	lock = true,
+	on_rightclick = function(pos, _, clicker)
+		local meta = minetest.get_meta(pos)
+		local pname = clicker:get_player_name()
+		if pname == meta:get_string"owner"
+		or pname == minetest.setting_get"name" then
+			minetest.show_formspec(
+				pname,
+				"default:chest_locked_connected_left",
+				"size[13,9]"..
+				"list[nodemeta:".. pos.x .. "," .. pos.y .. "," ..pos.z .. ";main;0,0;13,5;]"..
+				"list[current_player;main;2.5,5.2;8,4;]"
+			)
+		end
+	end
 })
 
 
@@ -328,22 +347,6 @@ minetest.register_alias("connected_chests:chest_right_locked", "default:chest_lo
 	--~ minetest.log("action", player:get_player_name()..
 		--~ " moves stuff "..text.." at "..minetest.pos_to_string(pos))
 --~ end
-
---~ chest_locked.on_rightclick = function(pos, _, clicker)
-	--~ local meta = minetest.get_meta(pos)
-	--~ local pname = clicker:get_player_name()
-	--~ if pname == meta:get_string"owner"
-	--~ or pname == minetest.setting_get"name" then
-		--~ minetest.show_formspec(
-			--~ pname,
-			--~ "connected_chests:chest_locked_left",
-			--~ "size[13,9]"..
-			--~ "list[nodemeta:".. pos.x .. "," .. pos.y .. "," ..pos.z .. ";main;0,0;13,5;]"..
-			--~ "list[current_player;main;2.5,5.2;8,4;]"
-		--~ )
-	--~ end
---~ end
-
 
 
 local time = (minetest.get_us_time() - load_time_start) / 1000000
