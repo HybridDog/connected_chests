@@ -16,4 +16,5 @@ If you got ideas or found bugs, please tell them to me.
 
 
 TODO:  
-— disallow rotating the chest with a screwdriver
+* disallow rotating the chest with a screwdriver
+* add abms when registering the chest instead of using chestdata
