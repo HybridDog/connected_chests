@@ -169,7 +169,7 @@ function connected_chests.register_chest(fromname, data)
 				return
 			end
 			connect_chests(pu, pa, par2, fromname)
-			if not minetest.setting_getbool"creative_mode" then
+			if not minetest.settings:get_bool"creative_mode" then
 				itemstack:take_item()
 				return itemstack
 			end
@@ -199,7 +199,7 @@ function connected_chests.register_chest(fromname, data)
 	chest.after_place_node = nil
 	chest.on_receive_fields = nil
 	if data.on_rightclick then
-		chest.on_rightclick = data.on_rightclick
+		chest.on_rightclick = function()print"yem"end--data.on_rightclick
 	end
 
 	if not data.front then
@@ -293,7 +293,7 @@ connected_chests.register_chest("default:chest_locked", {
 		local meta = minetest.get_meta(pos)
 		local pname = clicker:get_player_name()
 		if pname == meta:get_string"owner"
-		or pname == minetest.setting_get"name" then
+		or pname == minetest.settings:get"name" then
 			minetest.show_formspec(
 				pname,
 				"default:chest_locked_connected_left",
