@@ -155,21 +155,22 @@ function connected_chests.register_chest(fromname, data)
 
 	-- override the original node to support connecting
 	local place_chest = minetest.registered_nodes[fromname].on_place
+	local creative_mode = minetest.settings:get_bool"creative_mode"
 	minetest.override_item(fromname, {
 		on_place = function(itemstack, placer, pointed_thing)
-			if not placer then
-				return
+			if not placer
+			or not placer:get_player_control().sneak then
+				return place_chest(itemstack, placer, pointed_thing)
 			end
 			local pu, pa, par2 = get_pointed_info(pointed_thing, fromname)
-			if not pu
-			or not placer:get_player_control().sneak then
+			if not pu then
 				return place_chest(itemstack, placer, pointed_thing)
 			end
 			if minetest.is_protected(pa, placer:get_player_name()) then
 				return
 			end
 			connect_chests(pu, pa, par2, fromname)
-			if not minetest.settings:get_bool"creative_mode" then
+			if not creative_mode then
 				itemstack:take_item()
 				return itemstack
 			end
@@ -200,6 +201,12 @@ function connected_chests.register_chest(fromname, data)
 	chest.on_receive_fields = nil
 	if data.on_rightclick then
 		chest.on_rightclick = function()print"yem"end--data.on_rightclick
+	end
+	function chest.on_rotate()
+		return false
+	end
+	if chest.tube then
+		chest.tube.connect_sides = {left = 1, back = 1, front = 1, bottom = 1, top = 1}
 	end
 
 	if not data.front then
