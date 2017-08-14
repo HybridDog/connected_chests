@@ -206,6 +206,7 @@ function connected_chests.register_chest(fromname, data)
 		return false
 	end
 	if chest.tube then
+		chest.tube = table.copy(chest.tube)
 		chest.tube.connect_sides = {left = 1, back = 1, front = 1, bottom = 1, top = 1}
 	end
 
