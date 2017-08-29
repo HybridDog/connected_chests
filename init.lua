@@ -182,7 +182,7 @@ function connected_chests.register_chest(fromname, data)
 
 	-- the left one contains inventory
 	local chest = {}
-	local origdef = table.copy(minetest.registered_nodes[fromname])
+	local origdef = minetest.registered_nodes[fromname]
 	for i in pairs(origdef) do
 		chest[i] = rawget(origdef, i)
 	end
