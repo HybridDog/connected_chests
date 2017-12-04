@@ -200,7 +200,7 @@ function connected_chests.register_chest(fromname, data)
 	chest.after_place_node = nil
 	chest.on_receive_fields = nil
 	if data.on_rightclick then
-		chest.on_rightclick = function()print"yem"end--data.on_rightclick
+		chest.on_rightclick = data.on_rightclick
 	end
 	function chest.on_rotate()
 		return false
@@ -289,7 +289,20 @@ local big_formspec = "size[13,9]"..
 connected_chests.register_chest("default:chest", {
 	get_formspec = function()
 		return big_formspec
+	end,
+	on_rightclick = function(pos, _, player)
+		minetest.sound_play("default_chest_open", {gain = 0.3,
+				pos = pos, max_hear_distance = 10})
+
+		minetest.show_formspec(
+			player:get_player_name(),
+			"default:chest_locked_connected_left",
+			"size[13,9]"..
+			"list[nodemeta:".. pos.x .. "," .. pos.y .. "," ..pos.z .. ";main;0,0;13,5;]"..
+			"list[current_player;main;2.5,5.2;8,4;]"
+		)
 	end
+
 })
 
 connected_chests.register_chest("default:chest_locked", {
@@ -297,19 +310,22 @@ connected_chests.register_chest("default:chest_locked", {
 		return big_formspec
 	end,
 	lock = true,
-	on_rightclick = function(pos, _, clicker)
-		local meta = minetest.get_meta(pos)
-		local pname = clicker:get_player_name()
-		if pname == meta:get_string"owner"
-		or pname == minetest.settings:get"name" then
-			minetest.show_formspec(
-				pname,
-				"default:chest_locked_connected_left",
-				"size[13,9]"..
-				"list[nodemeta:".. pos.x .. "," .. pos.y .. "," ..pos.z .. ";main;0,0;13,5;]"..
-				"list[current_player;main;2.5,5.2;8,4;]"
-			)
+	on_rightclick = function(pos, _, player)
+		if not default.can_interact_with_node(player, pos) then
+			minetest.sound_play("default_chest_locked", {pos = pos})
+			return
 		end
+
+		minetest.sound_play("default_chest_open", {gain = 0.3,
+				pos = pos, max_hear_distance = 10})
+
+		minetest.show_formspec(
+			player:get_player_name(),
+			"default:chest_locked_connected_left",
+			"size[13,9]"..
+			"list[nodemeta:".. pos.x .. "," .. pos.y .. "," ..pos.z .. ";main;0,0;13,5;]"..
+			"list[current_player;main;2.5,5.2;8,4;]"
+		)
 	end
 })
 
