@@ -6,3 +6,5 @@
   default_chest_lock.png
   default_chest_side.png
   default_chest_top.png
+
+Each texture was modified using Gimp, to accomodate connected chests.
