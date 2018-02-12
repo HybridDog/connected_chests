@@ -1,6 +1,7 @@
 local load_time_start = minetest.get_us_time()
 
 
+-- param_tab maps the x and z offset to a param2 value
 local param_tab = {
 	["-1 0"] = 0,
 	 ["1 0"] = 2,
@@ -8,6 +9,7 @@ local param_tab = {
 	 ["0 1"] = 1,
 }
 
+-- param_tab2 maps the other way round
 local param_tab2 = {}
 for n,i in pairs(param_tab) do
 	param_tab2[i] = n:split" "
@@ -15,9 +17,14 @@ end
 
 local function return_remove_next(allowed_name)
 	local function remove_next(pos, oldnode)
+		-- if the left node had an unexpected rotation, the right one can't be
+		-- found, in this case simply do nothing
 		if oldnode.param2 > 3 then
 			return
 		end
+
+		-- remove the right one if there is one
+		-- (the left one is already removed)
 		local x, z = unpack(param_tab2[oldnode.param2])
 		pos.x = pos.x-x
 		pos.z = pos.z-z
@@ -29,15 +36,21 @@ local function return_remove_next(allowed_name)
 end
 
 
+-- used when constructing the left node
 local function return_add_next(right_name)
 	local function add_next(pos, node)
 		node = node or minetest.get_node(pos)
 		local par = node.param2
+
+		-- if the left node is set with an unexpected rotation, put the chest
+		-- with default rotation
 		if par > 3 then
 			node.param2 = 0
 			minetest.set_node(pos, node)
 			return
 		end
+
+		-- put the right chest if possible
 		local x, z = unpack(param_tab2[par])
 		pos.x = pos.x-x
 		pos.z = pos.z-z
@@ -96,11 +109,13 @@ if minetest.global_exists"pipeworks" then
 	tube_to_left_locked = {
 		insert_object = function(pos, node, stack)
 			local x, z = unpack(param_tab2[node.param2])
-			return minetest.get_meta{x=pos.x+x, y=pos.y, z=pos.z+z}:get_inventory():add_item("main", stack)
+			return minetest.get_meta{x=pos.x+x, y=pos.y, z=pos.z+z
+				}:get_inventory():add_item("main", stack)
 		end,
 		can_insert = function(pos, node, stack)
 			local x, z = unpack(param_tab2[node.param2])
-			return minetest.get_meta{x=pos.x+x, y=pos.y, z=pos.z+z}:get_inventory():room_for_item("main", stack)
+			return minetest.get_meta{x=pos.x+x, y=pos.y, z=pos.z+z
+				}:get_inventory():room_for_item("main", stack)
 		end,
 		connect_sides = {right = 1, back = 1, front = 1, bottom = 1, top = 1}
 	}
@@ -189,8 +204,10 @@ function connected_chests.register_chest(fromname, data)
 
 	local top = chest.tiles[1]
 	local side = chest.tiles[4]
-	local top_texture = top .. "^([combine:16x16:5,0=" .. top .. "^connected_chests_frame.png^[makealpha:255,126,126)"
-	local side_texture = side .. "^([combine:16x16:5,0=" .. side .. "^connected_chests_frame.png^[makealpha:255,126,126)"
+	local top_texture = top .. "^([combine:16x16:5,0=" .. top ..
+		"^connected_chests_frame.png^[makealpha:255,126,126)"
+	local side_texture = side .. "^([combine:16x16:5,0=" .. side ..
+		"^connected_chests_frame.png^[makealpha:255,126,126)"
 
 
 	chest.description = "Big " .. chest.description
@@ -202,12 +219,17 @@ function connected_chests.register_chest(fromname, data)
 	if data.on_rightclick then
 		chest.on_rightclick = data.on_rightclick
 	end
+
+	-- disallow rotating a connected chest using a screwdriver
 	function chest.on_rotate()
 		return false
 	end
+
+	-- copy pipeworks tube data (if requisite)
 	if chest.tube then
 		chest.tube = table.copy(chest.tube)
-		chest.tube.connect_sides = {left = 1, back = 1, front = 1, bottom = 1, top = 1}
+		chest.tube.connect_sides = {left = 1, -- no connection to the right.
+			back = 1, front = 1, bottom = 1, top = 1}
 	end
 
 	if not data.front then
@@ -236,7 +258,6 @@ function connected_chests.register_chest(fromname, data)
 	local tiles = {top_texture.."^[transformFX", top_texture.."^[transformFX",
 		side, "default_obsidian_glass.png", side_texture, side_texture
 		.. "^" .. data.front .. "^[transformFX"}
-	--~ minetest.register_node(, {
 	minetest.register_node(":" .. name_right, {
 		tiles = tiles,
 		paramtype2 = "facedir",
@@ -245,11 +266,16 @@ function connected_chests.register_chest(fromname, data)
 		diggable = false,
 		on_construct = function(pos)
 			local node = minetest.get_node(pos)
+
+			-- if the right node has an unexpected rotation, try to set it with
+			-- a valid one
 			if node.param2 > 3 then
-				node.param2 = node.param2%4
+				node.param2 = node.param2 % 4
 				minetest.set_node(pos, node)
 				return
 			end
+
+			-- remove it if the left node can't be found
 			local x, z = unpack(param_tab2[node.param2])
 			local node_left = minetest.get_node{x=pos.x+x, y=pos.y, z=pos.z+z}
 			if node_left.name ~= name_left
@@ -257,12 +283,17 @@ function connected_chests.register_chest(fromname, data)
 				minetest.remove_node(pos)
 				return
 			end
+
+			-- connect pipework tubes if there are any
 			tube_update(pos)
 		end,
 		after_destruct = function(pos, oldnode)
+			-- simply remove the right node if it has an unexpected rotation
 			if oldnode.param2 > 3 then
 				return
 			end
+
+			-- add it back if the left node is still there
 			local x, z = unpack(param_tab2[oldnode.param2])
 			local node_left = minetest.get_node{x=pos.x+x, y=pos.y, z=pos.z+z}
 			if node_left.name == name_left
@@ -271,6 +302,8 @@ function connected_chests.register_chest(fromname, data)
 				minetest.set_node(pos, oldnode)
 				return
 			end
+
+			-- disconnect pipework tubes if there are any
 			tube_update(pos)
 		end,
 		tube = data.lock and tube_to_left_locked or tube_to_left,
@@ -362,8 +395,10 @@ end
 
 
 -- legacy
-minetest.register_alias("connected_chests:chest_left", "default:chest_connected_left")
-minetest.register_alias("connected_chests:chest_right", "default:chest_connected_right")
+minetest.register_alias("connected_chests:chest_left",
+	"default:chest_connected_left")
+minetest.register_alias("connected_chests:chest_right",
+	"default:chest_connected_right")
 minetest.register_alias("connected_chests:chest_left_locked", "default:chest_locked_connected_left")
 minetest.register_alias("connected_chests:chest_right_locked", "default:chest_locked_connected_right")
 
