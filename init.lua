@@ -15,7 +15,7 @@ for n,i in pairs(param_tab) do
 	param_tab2[i] = n:split" "
 end
 
-local function return_remove_next(allowed_name)
+local function return_remove_next(allowed_name, add_open)
 	local function remove_next(pos, oldnode)
 		-- if the left node had an unexpected rotation, the right one can't be
 		-- found, in this case simply do nothing
@@ -28,7 +28,9 @@ local function return_remove_next(allowed_name)
 		local x, z = unpack(param_tab2[oldnode.param2])
 		pos.x = pos.x-x
 		pos.z = pos.z-z
-		if minetest.get_node(pos).name == allowed_name then
+		local right_n = minetest.get_node(pos).name
+		if right_n == allowed_name
+		or (add_open and right_n == allowed_name .. "_open") then
 			minetest.remove_node(pos)
 		end
 	end
@@ -159,7 +161,9 @@ function connected_chests.register_chest(fromname, data)
 		minetest.add_node(pu, {name=name_left, param2=par})
 		minetest.add_node(pa, {name=name_right, param2=par})
 
-		metatable.fields.formspec = data.get_formspec(metatable, pu)
+		if not data.add_open_chest then
+			metatable.fields.formspec = data.get_formspec(metatable, pu)
+		end
 		metatable.fields.infotext = "Big " .. metatable.fields.infotext
 		local meta = minetest.get_meta(pu)
 		meta:from_table(metatable)
@@ -208,6 +212,7 @@ function connected_chests.register_chest(fromname, data)
 		"^connected_chests_frame.png^[makealpha:255,126,126)"
 	local side_texture = side .. "^([combine:16x16:5,0=" .. side ..
 		"^connected_chests_frame.png^[makealpha:255,126,126)"
+	local inside_texture
 
 
 	chest.description = "Big " .. chest.description
@@ -248,7 +253,42 @@ function connected_chests.register_chest(fromname, data)
 		},
 	}
 	chest.on_construct = return_add_next(name_right)
-	chest.after_destruct = return_remove_next(name_right)
+	chest.after_destruct = return_remove_next(name_right, data.add_open_chest)
+
+	if data.add_open_chest then
+		-- mostly copied from default
+		local def_opened = table.copy(chest)
+
+		def_opened.mesh = "chest_open.obj"
+		def_opened.drawtype = "mesh"
+		def_opened.paramtype = "light"
+		for i = 1, #def_opened.tiles do
+			if type(def_opened.tiles[i]) == "string" then
+				def_opened.tiles[i] =
+					{name = def_opened.tiles[i], backface_culling = true}
+			elseif def_opened.tiles[i].backface_culling == nil then
+				def_opened.tiles[i].backface_culling = true
+			end
+		end
+		def_opened.selection_box = {
+			type = "fixed",
+			fixed = {-0.5, -0.5, -0.5, 1.5, 3/16, 0.5},
+		}
+		def_opened.diggable = false
+		def_opened.on_blast = function() end
+inside_texture = "default_chest_inside.png^([combine:16x32:5,0=" ..
+			"default_chest_inside.png^connected_chests_inside_frame.png^[" ..
+			"makealpha:255,126,126)"
+		-- TODO, see right chest
+		-- here 3 and 4 are swapped and no mirroring is needed…
+		def_opened.tiles[3] = def_opened.tiles[4]
+		def_opened.tiles[3].name = def_opened.tiles[3].name
+		def_opened.tiles[5] = def_opened.tiles[6]
+
+		def_opened.tiles[6] = inside_texture
+
+		minetest.register_node(":" .. name_left.. "_open", def_opened)
+	end
 
 	--~ minetest.register_node("connected_chests:chest_left", chest)
 	minetest.register_node(":" .. name_left, chest)
@@ -258,7 +298,7 @@ function connected_chests.register_chest(fromname, data)
 	local tiles = {top_texture.."^[transformFX", top_texture.."^[transformFX",
 		side, "default_obsidian_glass.png", side_texture, side_texture
 		.. "^" .. data.front .. "^[transformFX"}
-	minetest.register_node(":" .. name_right, {
+	local right_def = {
 		tiles = tiles,
 		paramtype2 = "facedir",
 		drop = "",
@@ -308,60 +348,225 @@ function connected_chests.register_chest(fromname, data)
 		end,
 		tube = data.lock and tube_to_left_locked or tube_to_left,
 		groups = tube_groups,
-	})
+	}
+
+	if data.add_open_chest then
+		local def_opened = table.copy(right_def)
+
+		def_opened.mesh = "chest_open.obj"
+		def_opened.drawtype = "mesh"
+		def_opened.paramtype = "light"
+		for i = 1, #def_opened.tiles do
+			if type(def_opened.tiles[i]) == "string" then
+				def_opened.tiles[i] =
+					{name = def_opened.tiles[i], backface_culling = true}
+			elseif def_opened.tiles[i].backface_culling == nil then
+				def_opened.tiles[i].backface_culling = true
+			end
+		end
+
+		--~ def_opened.tiles[1] = "default_mese.png" -- top, passt
+		--~ def_opened.tiles[2] = "default_wood.png" -- bottom
+		--~ def_opened.tiles[3] = "default_stone.png" -- right and left side or so
+		--~ def_opened.tiles[4] = "default_obsidian.png" -- back side
+
+		--~ def_opened.tiles[5] = "default_cobble.png" -- front side
+		--~ def_opened.tiles[6] = "default_leaves.png" -- inside
+
+		-- fix right side, somehow
+		def_opened.tiles[4] = def_opened.tiles[3]
+		def_opened.tiles[4].name = def_opened.tiles[4].name .. "^[transformFX"
+
+		-- fix front side
+		def_opened.tiles[5] = def_opened.tiles[6]
+
+		-- add inside
+		def_opened.tiles[6] = inside_texture .. "^[transformFX"
+
+		-- TODO: back side looks like right side
+
+		minetest.register_node(":" .. name_right .. "_open", def_opened)
+	end
+
+	minetest.register_node(":" .. name_right, right_def)
 end
 
 
-local big_formspec = "size[13,9]"..
-	"list[current_name;main;0,0;13,5;]"..
-	"list[current_player;main;2.5,5.2;8,4;]"..
-	"listring[current_name;main]"..
-	"listring[current_player;main]"
+local function get_chest_formspec(pos)
+	local spos = pos.x .. "," .. pos.y .. "," .. pos.z
+	local formspec =
+		"size[13,9]" ..
+		"list[nodemeta:" .. spos .. ";main;0,0;13,5;]" ..
+		"list[current_player;main;2.5,5.2;8,4;]" ..
+		"listring[nodemeta:" .. spos .. ";main]" ..
+		"listring[current_player;main]"
+	return formspec
+end
 
+local open_chests = {} -- counter for players viewing the chest
+local accessed_chests = {} -- position of the chest a player views
 
-connected_chests.register_chest("default:chest", {
-	get_formspec = function()
-		return big_formspec
-	end,
-	on_rightclick = function(pos, _, player)
-		minetest.sound_play("default_chest_open", {gain = 0.3,
-				pos = pos, max_hear_distance = 10})
+-- a hacky way to close open connected default chests
+-- vi: vector index of the position of the left chest
+local function close_chest(vi)
+	local pos = minetest.get_position_from_hash(vi)
+	local node = minetest.get_node(pos)
+	local is_locked = node.name == "default:chest_locked_connected_left_open"
+	if node.name ~= "default:chest_connected_left_open"
+	and not is_locked then
+		return
+	end
+	if is_locked then
+		node.name = "default:chest_locked_connected_left"
+	else
+		node.name = "default:chest_connected_left"
+	end
+	minetest.swap_node(pos, node)
 
-		minetest.show_formspec(
-			player:get_player_name(),
-			"default:chest_locked_connected_left",
-			"size[13,9]"..
-			"list[nodemeta:".. pos.x .. "," .. pos.y .. "," ..pos.z .. ";main;0,0;13,5;]"..
-			"list[current_player;main;2.5,5.2;8,4;]"
-		)
+	-- close the right chest
+	-- TODO: test for valid rotation
+	local x, z = unpack(param_tab2[node.param2])
+	pos.x = pos.x-x
+	pos.z = pos.z-z
+	node = minetest.get_node(pos)
+	if is_locked then
+		if node.name == "default:chest_locked_connected_right_open" then
+			node.name = "default:chest_locked_connected_right"
+			minetest.swap_node(pos, node)
+		end
+	else
+		if node.name == "default:chest_connected_right_open" then
+			node.name = "default:chest_connected_right"
+			minetest.swap_node(pos, node)
+		end
+	end
+	pos.x = pos.x + x * 0.5
+	pos.z = pos.z + z * 0.5
+	minetest.sound_play("default_chest_close",
+		{gain = 10.3, pos = pos, max_hear_distance = 10})
+end
+
+-- close all remaining open chest on shutdown
+minetest.register_on_shutdown(function()
+	for vi in pairs(open_chests) do
+		close_chest(vi)
+	end
+	open_chests = nil
+end)
+
+-- close open chests when the last player exits formspec
+minetest.register_on_player_receive_fields(function(player, formname, fields)
+	if formname ~= "default:chest_connected"
+	and formname ~= "default:chest_locked_connected" then
+		return
+	end
+	if not player
+	or not fields.quit then
+		return
+	end
+	local pn = player:get_player_name()
+	local vi = accessed_chests[pn]
+	if not vi then
+		minetest.log("warning", pn .. " opened a chest without lid?")
+		return
+	end
+	accessed_chests[pn] = nil
+
+	local cnt = open_chests[vi]
+	if cnt == 1 then
+		close_chest(vi)
+		open_chests[vi] = nil
+	else
+		open_chests[vi] = cnt-1
 	end
 
+	return true
+end)
+
+connected_chests.register_chest("default:chest", {
+	add_open_chest = true,
+	on_rightclick = function(pos, _, player)
+		minetest.sound_play("default_chest_open",
+			{gain = 0.3, pos = pos, max_hear_distance = 10})
+
+		local vi = minetest.hash_node_position(pos)
+		if not open_chests[vi]
+		and not default.chest.chest_lid_obstructed(pos) then
+			local node = minetest.get_node(pos)
+			minetest.swap_node(pos, {
+				name = "default:chest_connected_left_open",
+				param2 = node.param2})
+
+			-- TODO: test for invalid param2 values
+			local x, z = unpack(param_tab2[node.param2])
+			local pos_right = {x=pos.x-x, y=pos.y, z=pos.z-z}
+			node = minetest.get_node(pos_right)
+			if node.name == "default:chest_connected_right"
+			and not default.chest.chest_lid_obstructed(pos_right) then
+				minetest.swap_node(pos_right, {
+					name = "default:chest_connected_right_open",
+					param2 = node.param2})
+			end
+		end
+
+		local pname = player:get_player_name()
+		local spec = get_chest_formspec(pos)
+
+		minetest.after(0.2, minetest.show_formspec, pname,
+			"default:chest_connected", spec)
+
+		open_chests[vi] = open_chests[vi] or 0
+		open_chests[vi] = open_chests[vi]+1
+
+		accessed_chests[pname] = vi
+	end
 })
 
 connected_chests.register_chest("default:chest_locked", {
-	get_formspec = function()
-		return big_formspec
-	end,
 	lock = true,
+	add_open_chest = true,
 	on_rightclick = function(pos, _, player)
 		if not default.can_interact_with_node(player, pos) then
 			minetest.sound_play("default_chest_locked", {pos = pos})
 			return
 		end
 
-		minetest.sound_play("default_chest_open", {gain = 0.3,
-				pos = pos, max_hear_distance = 10})
+		minetest.sound_play("default_chest_open",
+			{gain = 0.32, pos = pos, max_hear_distance = 10})
 
-		minetest.show_formspec(
-			player:get_player_name(),
-			"default:chest_locked_connected_left",
-			"size[13,9]"..
-			"list[nodemeta:".. pos.x .. "," .. pos.y .. "," ..pos.z .. ";main;0,0;13,5;]"..
-			"list[current_player;main;2.5,5.2;8,4;]"
-		)
+		local vi = minetest.hash_node_position(pos)
+		-- TODO: somehow avoid using the chest node names here
+		if not open_chests[vi]
+		and not default.chest.chest_lid_obstructed(pos) then
+			local node = minetest.get_node(pos)
+			minetest.swap_node(pos, {
+				name = "default:chest_locked_connected_left_open",
+				param2 = node.param2})
+
+			-- TODO: test for invalid param2 values
+			local x, z = unpack(param_tab2[node.param2])
+			local pos_right = {x=pos.x-x, y=pos.y, z=pos.z-z}
+			node = minetest.get_node(pos_right)
+			if node.name == "default:chest_locked_connected_right"
+			and not default.chest.chest_lid_obstructed(pos_right) then
+				minetest.swap_node(pos_right, {
+					name = "default:chest_locked_connected_right_open",
+					param2 = node.param2})
+			end
+		end
+
+		local pname = player:get_player_name()
+		local spec = get_chest_formspec(pos)
+
+		minetest.after(0.2, minetest.show_formspec, pname,
+			"default:chest_locked_connected", spec)
+
+		open_chests[vi] = open_chests[vi] or 0
+		open_chests[vi] = open_chests[vi]+1
+
+		accessed_chests[pname] = vi
 	end
 })
-
 
 
 -- abms to fix half chests
