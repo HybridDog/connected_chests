@@ -516,10 +516,12 @@ connected_chests.register_chest("default:chest", {
 		minetest.after(0.2, minetest.show_formspec, pname,
 			"default:chest_connected", spec)
 
-		open_chests[vi] = open_chests[vi] or 0
-		open_chests[vi] = open_chests[vi]+1
+		if not accessed_chests[pname] then
+			open_chests[vi] = open_chests[vi] or 0
+			open_chests[vi] = open_chests[vi]+1
 
-		accessed_chests[pname] = vi
+			accessed_chests[pname] = vi
+		end
 	end
 })
 
@@ -562,10 +564,12 @@ connected_chests.register_chest("default:chest_locked", {
 		minetest.after(0.2, minetest.show_formspec, pname,
 			"default:chest_locked_connected", spec)
 
-		open_chests[vi] = open_chests[vi] or 0
-		open_chests[vi] = open_chests[vi]+1
+		if not accessed_chests[pname] then
+			open_chests[vi] = open_chests[vi] or 0
+			open_chests[vi] = open_chests[vi]+1
 
-		accessed_chests[pname] = vi
+			accessed_chests[pname] = vi
+		end
 	end
 })
 
