@@ -483,6 +483,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 	return true
 end)
 
+local chest_lid_obstructed = default.chest.chest_lid_obstructed
 connected_chests.register_chest("default:chest", {
 	add_open_chest = true,
 	on_rightclick = function(pos, _, player)
@@ -491,7 +492,7 @@ connected_chests.register_chest("default:chest", {
 
 		local vi = minetest.hash_node_position(pos)
 		if not open_chests[vi]
-		and not default.chest.chest_lid_obstructed(pos) then
+		and not chest_lid_obstructed(pos) then
 			local node = minetest.get_node(pos)
 			minetest.swap_node(pos, {
 				name = "default:chest_connected_left_open",
@@ -502,7 +503,7 @@ connected_chests.register_chest("default:chest", {
 			local pos_right = {x=pos.x-x, y=pos.y, z=pos.z-z}
 			node = minetest.get_node(pos_right)
 			if node.name == "default:chest_connected_right"
-			and not default.chest.chest_lid_obstructed(pos_right) then
+			and not chest_lid_obstructed(pos_right) then
 				minetest.swap_node(pos_right, {
 					name = "default:chest_connected_right_open",
 					param2 = node.param2})
@@ -537,7 +538,7 @@ connected_chests.register_chest("default:chest_locked", {
 		local vi = minetest.hash_node_position(pos)
 		-- TODO: somehow avoid using the chest node names here
 		if not open_chests[vi]
-		and not default.chest.chest_lid_obstructed(pos) then
+		and not chest_lid_obstructed(pos) then
 			local node = minetest.get_node(pos)
 			minetest.swap_node(pos, {
 				name = "default:chest_locked_connected_left_open",
@@ -548,7 +549,7 @@ connected_chests.register_chest("default:chest_locked", {
 			local pos_right = {x=pos.x-x, y=pos.y, z=pos.z-z}
 			node = minetest.get_node(pos_right)
 			if node.name == "default:chest_locked_connected_right"
-			and not default.chest.chest_lid_obstructed(pos_right) then
+			and not chest_lid_obstructed(pos_right) then
 				minetest.swap_node(pos_right, {
 					name = "default:chest_locked_connected_right_open",
 					param2 = node.param2})
@@ -600,6 +601,27 @@ end
 
 
 -- legacy
+
+-- the default chest lid obstruction function wasn't exposed in minetest 0.4.16
+if not chest_lid_obstructed then
+	-- copied from default's nodes.lua
+	function chest_lid_obstructed(pos)
+		local above = {x = pos.x, y = pos.y + 1, z = pos.z}
+		local def = minetest.registered_nodes[minetest.get_node(above).name]
+		-- allow ladders, signs, wallmounted things and torches to not obstruct
+		if def and
+				(def.drawtype == "airlike" or
+				def.drawtype == "signlike" or
+				def.drawtype == "torchlike" or
+				(def.drawtype == "nodebox" and def.paramtype2 == "wallmounted")) then
+			return false
+		end
+		return true
+	end
+end
+
+-- once the connected_chests mod supported only default chests and used
+-- different node names
 minetest.register_alias("connected_chests:chest_left",
 	"default:chest_connected_left")
 minetest.register_alias("connected_chests:chest_right",
