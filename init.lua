@@ -483,7 +483,8 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 	return true
 end)
 
-local chest_lid_obstructed = default.chest.chest_lid_obstructed
+local chest_lid_obstructed = default.chest
+	and default.chest.chest_lid_obstructed
 connected_chests.register_chest("default:chest", {
 	add_open_chest = true,
 	on_rightclick = function(pos, _, player)
