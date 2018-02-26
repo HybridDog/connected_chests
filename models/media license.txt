@@ -1,0 +1,8 @@
+connected_chest_open.obj, is a modified version of:
+chest_open.obj by sofar
+
+Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)
+Copyright (C) 2010-2016:
+  sofar
+
+Simply doubled in length, and repositioned, using Blender.
