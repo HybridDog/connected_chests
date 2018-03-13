@@ -259,7 +259,7 @@ function connected_chests.register_chest(fromname, data)
 		-- mostly copied from default
 		local def_opened = table.copy(chest)
 
-		def_opened.mesh = "chest_open.obj"
+		def_opened.mesh = "connected_chest_open.obj"
 		def_opened.drawtype = "mesh"
 		def_opened.paramtype = "light"
 		for i = 1, #def_opened.tiles do
@@ -353,7 +353,7 @@ inside_texture = "default_chest_inside.png^([combine:16x32:5,0=" ..
 	if data.add_open_chest then
 		local def_opened = table.copy(right_def)
 
-		def_opened.mesh = "chest_open.obj"
+		def_opened.mesh = "connected_chest_open.obj"
 		def_opened.drawtype = "mesh"
 		def_opened.paramtype = "light"
 		for i = 1, #def_opened.tiles do
