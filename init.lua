@@ -633,6 +633,8 @@ minetest.register_alias("connected_chests:chest_right",
 	"default:chest_connected_right")
 minetest.register_alias("connected_chests:chest_left_locked", "default:chest_locked_connected_left")
 minetest.register_alias("connected_chests:chest_right_locked", "default:chest_locked_connected_right")
+minetest.register_alias("connected_chests:chest_locked_left", "default:chest_locked_connected_left")
+minetest.register_alias("connected_chests:chest_locked_right", "default:chest_locked_connected_right")
 
 --~ local function log_access(pos, player, text)
 	--~ minetest.log("action", player:get_player_name()..
