@@ -16,4 +16,5 @@ If you got ideas or found bugs, please tell them to me.
 
 
 TODO:
-* fix open big chest back side texture
+* Fix open big chest back side texture: The current .obj mesh model uses a side
+  texture for the back side, so the model needs change.
