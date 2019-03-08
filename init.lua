@@ -47,6 +47,9 @@ local function return_add_next(right_name)
 		-- if the left node is set with an unexpected rotation, put the chest
 		-- with default rotation
 		if par > 3 then
+			minetest.log("action",
+				node.name .. " with invalid param2 found, pos: " ..
+				minetest.pos_to_string(pos) .. ", param2: " .. par)
 			node.param2 = 0
 			minetest.set_node(pos, node)
 			return
@@ -92,7 +95,7 @@ local chestdata = {}
 
 
 -- executed when connecting the chests
-local function connect_chests(pu, pa, old_param2, name)
+local function connect_chests(pu, pa, old_param2, data)
 	local metatable = minetest.get_meta(pu):to_table()
 
 	local par = param_tab[pu.x-pa.x.." "..pu.z-pa.z]
@@ -102,7 +105,7 @@ local function connect_chests(pu, pa, old_param2, name)
 		par = par_inverted
 	end
 
-	chestdata[name].on_connect(pu, pa, par, metatable)
+	data.on_connect(pu, pa, par, metatable)
 end
 
 
@@ -188,7 +191,7 @@ function connected_chests.register_chest(fromname, data)
 			if minetest.is_protected(pa, placer:get_player_name()) then
 				return
 			end
-			connect_chests(pu, pa, par2, fromname)
+			connect_chests(pu, pa, par2, data)
 			if not creative_mode then
 				itemstack:take_item()
 				return itemstack
@@ -389,6 +392,35 @@ inside_texture = "default_chest_inside.png^([combine:16x32:5,0=" ..
 	end
 
 	minetest.register_node(":" .. name_right, right_def)
+
+
+	-- LBMs to fix half chests if they occur for some reason
+	minetest.register_lbm{
+		label = "Connected Chest fixer " .. name_right,
+		name = ":" .. name_right .. "_reconnect_lbm",
+		nodenames = {name_right},
+		run_at_every_load = true,
+		action = function(pos, node)
+			if node.param2 > 3 then
+				node.param2 = node.param2%4
+				minetest.set_node(pos, node)
+				return
+			end
+			local x, z = unpack(param_tab2[node.param2])
+			local left_node = minetest.get_node{x=pos.x+x, y=pos.y, z=pos.z+z}
+			if left_node.name ~= name_left
+			or left_node.param2 ~= node.param2 then
+				minetest.remove_node(pos)
+			end
+		end,
+	}
+	minetest.register_lbm{
+		label = "Connected Chest fixer " .. name_left,
+		name = ":" .. name_left .. "_reconnect_lbm",
+		nodenames = {name_left},
+		run_at_every_load = true,
+		action = return_add_next(name_right),
+	}
 end
 
 
@@ -573,35 +605,6 @@ connected_chests.register_chest("default:chest_locked", {
 		end
 	end
 })
-
-
--- abms to fix half chests
-for _,i in pairs(chestdata) do
-	minetest.register_abm{
-		nodenames = {i.right},
-		interval = 10,
-		chance = 1,
-		action = function(pos, node)
-			if node.param2 > 3 then
-				node.param2 = node.param2%4
-				minetest.set_node(pos, node)
-				return
-			end
-			local x, z = unpack(param_tab2[node.param2])
-			local left_node = minetest.get_node{x=pos.x+x, y=pos.y, z=pos.z+z}
-			if left_node.name ~= i.left
-			or left_node.param2 ~= node.param2 then
-				minetest.remove_node(pos)
-			end
-		end,
-	}
-	minetest.register_abm{
-		nodenames = {i.left},
-		interval = 3,
-		chance = 1,
-		action = return_add_next(i.right),
-	}
-end
 
 
 

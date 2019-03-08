@@ -16,5 +16,4 @@ If you got ideas or found bugs, please tell them to me.
 
 
 TODO:
-* add abms when registering the chest instead of using chestdata
 * fix open big chest back side texture
