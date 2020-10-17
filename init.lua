@@ -531,7 +531,7 @@ connected_chests.register_chest("default:chest", {
 			-- TODO: test for invalid param2 values
 			local x, z = unpack(param_tab2[left_param2])
 			local pos_right = {x=pos.x-x, y=pos.y, z=pos.z-z}
-			node = minetest.get_node(pos_right)
+			local node = minetest.get_node(pos_right)
 			if node.name == "default:chest_connected_right"
 			and not chest_lid_obstructed(pos_right) then
 				minetest.swap_node(pos, {
@@ -579,7 +579,7 @@ connected_chests.register_chest("default:chest_locked", {
 			-- TODO: test for invalid param2 values
 			local x, z = unpack(param_tab2[left_param2])
 			local pos_right = {x=pos.x-x, y=pos.y, z=pos.z-z}
-			node = minetest.get_node(pos_right)
+			local node = minetest.get_node(pos_right)
 			if node.name == "default:chest_locked_connected_right"
 			and not chest_lid_obstructed(pos_right) then
 				minetest.swap_node(pos_right, {
