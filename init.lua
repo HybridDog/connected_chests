@@ -1,6 +1,3 @@
-local load_time_start = minetest.get_us_time()
-
-
 -- param_tab maps the x and z offset to a param2 value
 local param_tab = {
 	["-1 0"] = 0,
@@ -279,7 +276,7 @@ function connected_chests.register_chest(fromname, data)
 		}
 		def_opened.diggable = false
 		def_opened.on_blast = function() end
-inside_texture = "default_chest_inside.png^([combine:16x32:5,0=" ..
+		inside_texture = "default_chest_inside.png^([combine:16x32:5,0=" ..
 			"default_chest_inside.png^connected_chests_inside_frame.png^[" ..
 			"makealpha:255,126,126)"
 		-- TODO, see right chest
@@ -638,17 +635,3 @@ minetest.register_alias("connected_chests:chest_left_locked", "default:chest_loc
 minetest.register_alias("connected_chests:chest_right_locked", "default:chest_locked_connected_right")
 minetest.register_alias("connected_chests:chest_locked_left", "default:chest_locked_connected_left")
 minetest.register_alias("connected_chests:chest_locked_right", "default:chest_locked_connected_right")
-
---~ local function log_access(pos, player, text)
-	--~ minetest.log("action", player:get_player_name()..
-		--~ " moves stuff "..text.." at "..minetest.pos_to_string(pos))
---~ end
-
-
-local time = (minetest.get_us_time() - load_time_start) / 1000000
-local msg = "[connected_chests] loaded after ca. " .. time .. " seconds."
-if time > 0.01 then
-	print(msg)
-else
-	minetest.log("info", msg)
-end
