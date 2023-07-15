@@ -475,7 +475,7 @@ local function close_chest(vi)
 	pos.x = pos.x + x * 0.5
 	pos.z = pos.z + z * 0.5
 	minetest.sound_play("default_chest_close",
-		{gain = 10.3, pos = pos, max_hear_distance = 10})
+		{gain = 0.3, pos = pos, max_hear_distance = 10, pitch = 0.7}, true)
 end
 
 -- close all remaining open chest on shutdown
@@ -521,7 +521,7 @@ connected_chests.register_chest("default:chest", {
 	add_open_chest = true,
 	on_rightclick = function(pos, _, player)
 		minetest.sound_play("default_chest_open",
-			{gain = 0.3, pos = pos, max_hear_distance = 10})
+			{gain = 0.3, pos = pos, max_hear_distance = 10, pitch = 0.7}, true)
 
 		local vi = minetest.hash_node_position(pos)
 		if not open_chests[vi]
@@ -563,12 +563,12 @@ connected_chests.register_chest("default:chest_locked", {
 	add_open_chest = true,
 	on_rightclick = function(pos, _, player)
 		if not default.can_interact_with_node(player, pos) then
-			minetest.sound_play("default_chest_locked", {pos = pos})
+			minetest.sound_play("default_chest_locked", {pos = pos}, true)
 			return
 		end
 
 		minetest.sound_play("default_chest_open",
-			{gain = 0.32, pos = pos, max_hear_distance = 10})
+			{gain = 0.32, pos = pos, max_hear_distance = 10, pitch = 0.7}, true)
 
 		local vi = minetest.hash_node_position(pos)
 		-- TODO: somehow avoid using the chest node names here
