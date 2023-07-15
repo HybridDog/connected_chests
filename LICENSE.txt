@@ -1,2 +1,2 @@
 connected_chest_open from default
-rest WTFPL
+Content which is not copied from minetest_game is licensed under MIT.
