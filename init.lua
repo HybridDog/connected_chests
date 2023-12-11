@@ -1,3 +1,6 @@
+-- for translation
+local S = minetest.get_translator("connected_chests")
+
 -- param_tab maps the x and z offset to a param2 value
 local param_tab = {
 	["-1 0"] = 0,
@@ -147,7 +150,7 @@ connected_chests.register_chest(<original_node>, {
 })
 ]]
 
-function connected_chests.register_chest(fromname, data)
+function connected_chests.register_chest(fromname, toname, data)
 	chestdata[fromname] = data
 
 	--~ local mod, name = fromname:split":"
@@ -164,7 +167,7 @@ function connected_chests.register_chest(fromname, data)
 		if not data.add_open_chest then
 			metatable.fields.formspec = data.get_formspec(metatable, pu)
 		end
-		metatable.fields.infotext = "Big " .. metatable.fields.infotext
+		metatable.fields.infotext = toname
 		local meta = minetest.get_meta(pu)
 		meta:from_table(metatable)
 		local inv = meta:get_inventory()
@@ -215,7 +218,7 @@ function connected_chests.register_chest(fromname, data)
 	local inside_texture
 
 
-	chest.description = "Big " .. chest.description
+	chest.description = toname
 	chest.groups = table.copy(chest.groups)
 	chest.groups.not_in_creative_inventory = 1
 	chest.legacy_facedir_simple = nil
@@ -514,7 +517,7 @@ end)
 
 local chest_lid_obstructed = default.chest
 	and default.chest.chest_lid_obstructed
-connected_chests.register_chest("default:chest", {
+connected_chests.register_chest("default:chest", S("Big Chest"), {
 	add_open_chest = true,
 	on_rightclick = function(pos, _, player)
 		minetest.sound_play("default_chest_open",
@@ -555,7 +558,7 @@ connected_chests.register_chest("default:chest", {
 	end
 })
 
-connected_chests.register_chest("default:chest_locked", {
+connected_chests.register_chest("default:chest_locked", S("Big Locked Chest"), {
 	lock = true,
 	add_open_chest = true,
 	on_rightclick = function(pos, _, player)
