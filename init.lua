@@ -1,3 +1,6 @@
+-- for translation
+local S = minetest.get_translator("connected_chests")
+
 -- param_tab maps the x and z offset to a param2 value
 local param_tab = {
 	["-1 0"] = 0,
@@ -136,6 +139,8 @@ end
 connected_chests = {chestdata = chestdata}
 --[[
 connected_chests.register_chest(<original_node>, {
+	description = <string>, -- The name of the connected chest as shown to the
+		-- player, i.e. the node metadata infotext
 	get_formspec = function(metatable, pos)
 		return <formspec_of_big>
 	end,
@@ -156,6 +161,13 @@ function connected_chests.register_chest(fromname, data)
 	data.left = name_left
 	data.right = name_right
 
+	local description = data.description
+	if not description then
+		minetest.log("deprecated",
+			"Missing connected chest description for " .. fromname)
+		description = "Big " .. minetest.registered_nodes[fromname].description
+	end
+
 	-- executed when connecting the chest
 	data.on_connect = function(pu, pa, par, metatable)
 		minetest.add_node(pu, {name=name_left, param2=par})
@@ -164,7 +176,7 @@ function connected_chests.register_chest(fromname, data)
 		if not data.add_open_chest then
 			metatable.fields.formspec = data.get_formspec(metatable, pu)
 		end
-		metatable.fields.infotext = "Big " .. metatable.fields.infotext
+		metatable.fields.infotext = description
 		local meta = minetest.get_meta(pu)
 		meta:from_table(metatable)
 		local inv = meta:get_inventory()
@@ -215,7 +227,7 @@ function connected_chests.register_chest(fromname, data)
 	local inside_texture
 
 
-	chest.description = "Big " .. chest.description
+	chest.description = description
 	chest.groups = table.copy(chest.groups)
 	chest.groups.not_in_creative_inventory = 1
 	chest.legacy_facedir_simple = nil
@@ -515,6 +527,7 @@ end)
 local chest_lid_obstructed = default.chest
 	and default.chest.chest_lid_obstructed
 connected_chests.register_chest("default:chest", {
+	description = S("Big Chest"),
 	add_open_chest = true,
 	on_rightclick = function(pos, _, player)
 		minetest.sound_play("default_chest_open",
@@ -556,6 +569,7 @@ connected_chests.register_chest("default:chest", {
 })
 
 connected_chests.register_chest("default:chest_locked", {
+	description = S("Big Locked Chest"),
 	lock = true,
 	add_open_chest = true,
 	on_rightclick = function(pos, _, player)
