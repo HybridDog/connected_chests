@@ -377,14 +377,6 @@ function connected_chests.register_chest(fromname, data)
 			end
 		end
 
-		--~ def_opened.tiles[1] = "default_mese.png" -- top, passt
-		--~ def_opened.tiles[2] = "default_wood.png" -- bottom
-		--~ def_opened.tiles[3] = "default_stone.png" -- right and left side or so
-		--~ def_opened.tiles[4] = "default_obsidian.png" -- back side
-
-		--~ def_opened.tiles[5] = "default_cobble.png" -- front side
-		--~ def_opened.tiles[6] = "default_leaves.png" -- inside
-
 		-- fix right side, somehow
 		def_opened.tiles[4] = def_opened.tiles[3]
 		def_opened.tiles[4].name = def_opened.tiles[4].name .. "^[transformFX"
@@ -632,7 +624,8 @@ if not chest_lid_obstructed then
 				(def.drawtype == "airlike" or
 				def.drawtype == "signlike" or
 				def.drawtype == "torchlike" or
-				(def.drawtype == "nodebox" and def.paramtype2 == "wallmounted")) then
+				(def.drawtype == "nodebox"
+					and def.paramtype2 == "wallmounted")) then
 			return false
 		end
 		return true
@@ -645,10 +638,14 @@ minetest.register_alias("connected_chests:chest_left",
 	"default:chest_connected_left")
 minetest.register_alias("connected_chests:chest_right",
 	"default:chest_connected_right")
-minetest.register_alias("connected_chests:chest_left_locked", "default:chest_locked_connected_left")
-minetest.register_alias("connected_chests:chest_right_locked", "default:chest_locked_connected_right")
-minetest.register_alias("connected_chests:chest_locked_left", "default:chest_locked_connected_left")
-minetest.register_alias("connected_chests:chest_locked_right", "default:chest_locked_connected_right")
+minetest.register_alias("connected_chests:chest_left_locked",
+	"default:chest_locked_connected_left")
+minetest.register_alias("connected_chests:chest_right_locked",
+	"default:chest_locked_connected_right")
+minetest.register_alias("connected_chests:chest_locked_left",
+	"default:chest_locked_connected_left")
+minetest.register_alias("connected_chests:chest_locked_right",
+	"default:chest_locked_connected_right")
 
 if minetest.get_modpath("hopper") then
 	local function get_inventory(chest_right_pos)
@@ -659,15 +656,19 @@ if minetest.get_modpath("hopper") then
 			return
 		end
 		local x, z = unpack(param_tab2[node_right.param2])
-		local chest_left_pos = {x=chest_right_pos.x+x, y=chest_right_pos.y, z=chest_right_pos.z+z}
+		local chest_left_pos = {x=chest_right_pos.x+x, y=chest_right_pos.y,
+			z=chest_right_pos.z+z}
 		local node_left = minetest.get_node(chest_left_pos)
-		if node_left.name ~= "default:chest_connected_left" and node_left.name ~= "default:chest_connected_left_open" then
-			minetest.log("error","The left chest is not a chest: " .. node_left.name .. " at " .. vector.to_string(chest_left_pos))
+		if node_left.name ~= "default:chest_connected_left"
+		and node_left.name ~= "default:chest_connected_left_open" then
+			minetest.log("error","The left chest is not a chest: " ..
+				node_left.name .. " at " .. vector.to_string(chest_left_pos))
 			return
 		end
 		if node_left.param2 ~= node_right.param2 then
-			minetest.log("error","The chests are pointing in different directions: node_left.param2:"
-				.. node_left.param2 .. ", node_right.param2:" .. node_right.param2)
+			minetest.log("error", "The chests are pointing in different " ..
+				"directions: node_left.param2:" .. node_left.param2 ..
+				", node_right.param2:" .. node_right.param2)
 			return
 		end
 		return minetest.get_meta(chest_left_pos):get_inventory()
@@ -676,15 +677,21 @@ if minetest.get_modpath("hopper") then
 		{"top", "default:chest_connected_left", "main"},
 		{"bottom", "default:chest_connected_left", "main"},
 		{"side", "default:chest_connected_left", "main"},
-		{"top", "default:chest_connected_right", "main", get_inventory = get_inventory},
-		{"bottom", "default:chest_connected_right", "main", get_inventory = get_inventory},
-		{"side", "default:chest_connected_right", "main", get_inventory = get_inventory},
+		{"top", "default:chest_connected_right", "main",
+			get_inventory = get_inventory},
+		{"bottom", "default:chest_connected_right", "main",
+			get_inventory = get_inventory},
+		{"side", "default:chest_connected_right", "main",
+			get_inventory = get_inventory},
 		{"top", "default:chest_connected_left_open", "main"},
 		{"bottom", "default:chest_connected_left_open", "main"},
 		{"side", "default:chest_connected_left_open", "main"},
-		{"top", "default:chest_connected_right_open", "main", get_inventory = get_inventory},
-		{"bottom", "default:chest_connected_right_open", "main", get_inventory = get_inventory},
-		{"side", "default:chest_connected_right_open", "main", get_inventory = get_inventory},
+		{"top", "default:chest_connected_right_open", "main",
+			get_inventory = get_inventory},
+		{"bottom", "default:chest_connected_right_open", "main",
+			get_inventory = get_inventory},
+		{"side", "default:chest_connected_right_open", "main",
+			get_inventory = get_inventory},
 	})
 	local function set_hopper_param2(hopper_pos, chest_left_pos)
 		local param2_by_offset = {
@@ -693,12 +700,15 @@ if minetest.get_modpath("hopper") then
 			[vector.new( 1, 0, 0):to_string()] = 2,
 			[vector.new( 0, 0,-1):to_string()] = 3,
 		}
-		local hopper_param2 = param2_by_offset[(chest_left_pos - hopper_pos):to_string()]
+		local hopper_param2 = param2_by_offset[
+			(chest_left_pos - hopper_pos):to_string()]
 		if hopper_param2 then
 			return hopper_param2
 		end
-		local x, z = unpack(param_tab2[minetest.get_node(chest_left_pos).param2])
-		local chest_right_pos = {x=chest_left_pos.x-x, y=chest_left_pos.y, z=chest_left_pos.z-z}
+		local x, z = unpack(
+			param_tab2[minetest.get_node(chest_left_pos).param2])
+		local chest_right_pos = {x=chest_left_pos.x-x, y=chest_left_pos.y,
+			z=chest_left_pos.z-z}
 		return param2_by_offset[(chest_right_pos - hopper_pos):to_string()]
 	end
 	hopper:set_extra_container_info({
