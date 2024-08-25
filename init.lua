@@ -647,7 +647,7 @@ minetest.register_alias("connected_chests:chest_locked_left",
 minetest.register_alias("connected_chests:chest_locked_right",
 	"default:chest_locked_connected_right")
 
-if minetest.get_modpath("hopper") then
+if minetest.global_exists("hopper") and hopper.set_extra_container_info then
 	local function get_inventory(chest_right_pos)
 		local node_right = minetest.get_node(chest_right_pos)
 		if node_right.param2 > 3 then
